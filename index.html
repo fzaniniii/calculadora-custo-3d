@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<meta name="description" content="Calculadora do custo real de fabricar uma peça em PLA na Bambu Lab A1 — material, energia, depreciação e manutenção.">
+<meta name="description" content="Calculadora de custo e preço de venda de peças impressas em 3D — material, energia, depreciação, seu trabalho e sua margem.">
 
 <!-- PWA -->
 <link rel="manifest" href="/manifest.webmanifest">
@@ -18,7 +18,6 @@
 
 <style>
   :root {
-    /* Paleta iOS — claro */
     --bg: #f2f2f7;
     --card: #ffffff;
     --label: #000000;
@@ -26,12 +25,15 @@
     --label-3: rgba(60,60,67,0.30);
     --sep: rgba(60,60,67,0.29);
     --accent: #ff9500;
+    --verde: #34c759;
     --fill: rgba(120,120,128,0.12);
     --chrome: rgba(242,242,247,0.82);
     --c-material: #ff9500;
     --c-energia:  #34c759;
     --c-deprec:   #007aff;
     --c-manut:    #ff3b30;
+    --c-trabalho: #af52de;
+    --c-risco:    #8e8e93;
     --safe-t: env(safe-area-inset-top, 0px);
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-l: env(safe-area-inset-left, 0px);
@@ -47,972 +49,508 @@
       --label-3: rgba(235,235,245,0.30);
       --sep: rgba(84,84,88,0.65);
       --accent: #ff9f0a;
+      --verde: #30d158;
       --fill: rgba(120,120,128,0.24);
       --chrome: rgba(0,0,0,0.80);
       --c-material: #ff9f0a;
       --c-energia:  #30d158;
       --c-deprec:   #0a84ff;
       --c-manut:    #ff453a;
+      --c-trabalho: #bf5af2;
+      --c-risco:    #98989d;
     }
   }
 
   :root[data-theme="dark"] {
-    --bg: #000000;
-    --card: #1c1c1e;
-    --label: #ffffff;
-    --label-2: rgba(235,235,245,0.60);
-    --label-3: rgba(235,235,245,0.30);
-    --sep: rgba(84,84,88,0.65);
-    --accent: #ff9f0a;
-    --fill: rgba(120,120,128,0.24);
-    --chrome: rgba(0,0,0,0.80);
-    --c-material: #ff9f0a;
-    --c-energia:  #30d158;
-    --c-deprec:   #0a84ff;
-    --c-manut:    #ff453a;
+    --bg: #000000; --card: #1c1c1e; --label: #ffffff;
+    --label-2: rgba(235,235,245,0.60); --label-3: rgba(235,235,245,0.30);
+    --sep: rgba(84,84,88,0.65); --accent: #ff9f0a; --verde: #30d158;
+    --fill: rgba(120,120,128,0.24); --chrome: rgba(0,0,0,0.80);
+    --c-material: #ff9f0a; --c-energia: #30d158; --c-deprec: #0a84ff;
+    --c-manut: #ff453a; --c-trabalho: #bf5af2; --c-risco: #98989d;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-  html {
-    background: var(--bg);
-    height: 100%;
-  }
+  html { background: var(--bg); height: 100%; }
 
   body {
-    margin: 0;
-    height: 100%;
-    background: var(--bg);
-    color: var(--label);
+    margin: 0; height: 100%;
+    background: var(--bg); color: var(--label);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
-    font-size: 17px;
-    line-height: 1.35;
+    font-size: 17px; line-height: 1.35;
     -webkit-font-smoothing: antialiased;
-    -webkit-user-select: none;
-    user-select: none;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+    display: flex; flex-direction: column;
+    overflow: hidden; overscroll-behavior: none;
   }
 
-  /* ---------- Cabeçalho fixo com o resultado ---------- */
+  /* ---------- Cabeçalho ---------- */
 
   .hero {
     flex: none;
-    padding: calc(var(--safe-t) + 10px) calc(var(--safe-r) + 16px) 12px calc(var(--safe-l) + 16px);
+    padding: calc(var(--safe-t) + 10px) calc(var(--safe-r) + 16px) 13px calc(var(--safe-l) + 16px);
     background: var(--chrome);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 0.5px solid var(--sep);
-    position: relative;
     z-index: 10;
   }
 
-  .hero-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 2px;
+  .nav {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px;
   }
+
+  .nav-title {
+    flex: 1; min-width: 0;
+    font-size: 19px; font-weight: 700; letter-spacing: -0.02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .nav-btn {
+    appearance: none; border: none; background: transparent;
+    font: inherit; font-size: 16px; color: var(--accent);
+    padding: 11px 0 11px 15px; margin: -11px 0; min-height: 44px;
+    cursor: pointer; flex: none;
+  }
+
+  .nav-btn:active { opacity: 0.45; }
 
   .hero-cap {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    display: block;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase;
     color: var(--label-2);
-  }
-
-  .hero-printer {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--label-2);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .hero-printer::before {
-    content: "";
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    background: var(--c-energia);
   }
 
   .hero-value {
-    font-size: 44px;
-    font-weight: 700;
-    letter-spacing: -0.028em;
-    font-variant-numeric: tabular-nums;
-    line-height: 1.05;
-    margin: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-  }
-
-  .hero-value .cur {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--label-2);
-    letter-spacing: -0.01em;
-  }
-
-  .hero-meta {
-    font-size: 13px;
-    color: var(--label-2);
-    margin-top: 3px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  /* Barra proporcional */
-  .bar {
-    display: flex;
-    gap: 2px;
-    height: 7px;
-    margin: 12px 0 0;
-  }
-
-  .bar span {
     display: block;
-    height: 100%;
-    border-radius: 4px;
-    transition: flex-grow 0.28s cubic-bezier(0.32,0.72,0,1);
-    min-width: 0;
+    font-size: 44px; font-weight: 700; letter-spacing: -0.028em;
+    font-variant-numeric: tabular-nums; line-height: 1.05;
+    color: var(--verde);
+    margin: 1px 0 3px;
   }
 
-  /* Segmented control (iOS) */
-  .seg {
-    display: flex;
-    background: var(--fill);
-    border-radius: 9px;
-    padding: 2px;
-    margin-top: 12px;
+  .hero-sub {
+    display: block;
+    font-size: 13.5px; color: var(--label-2);
+    font-variant-numeric: tabular-nums;
   }
 
-  .seg button {
-    flex: 1;
-    appearance: none;
-    border: none;
-    background: transparent;
-    color: var(--label);
-    font: inherit;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 8px;
-    border-radius: 7px;
-    cursor: pointer;
-    transition: background 0.2s ease, box-shadow 0.2s ease;
-  }
+  .hero-sub b { color: var(--label); font-weight: 600; }
 
-  .seg button[aria-selected="true"] {
-    background: var(--card);
-    font-weight: 600;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04);
-  }
-
-  .seg button:active { opacity: 0.6; }
-
-  /* ---------- Área rolável ---------- */
+  /* ---------- Rolagem ---------- */
 
   main {
-    flex: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-y: contain;
+    flex: 1; overflow-y: auto;
+    -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
     padding: 18px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 32px) calc(var(--safe-l) + 16px);
   }
 
   .inner { max-width: 560px; margin: 0 auto; }
 
   .sec-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 0 16px 7px;
-    font-size: 13px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--label-2);
-    font-weight: 600;
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; padding: 0 16px 7px;
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--label-2); font-weight: 600;
   }
 
-  .sec-total {
-    text-transform: none;
-    letter-spacing: 0;
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    color: var(--label-2);
+  .sec-btn {
+    appearance: none; border: none; background: transparent;
+    font: inherit; font-size: 14px; font-weight: 500;
+    text-transform: none; letter-spacing: 0; color: var(--accent);
+    padding: 13px 0 13px 16px; margin: -13px 0; min-height: 44px;
+    cursor: pointer;
   }
 
-  /* Lista agrupada estilo iOS */
+  .sec-btn:active { opacity: 0.45; }
+
   .group {
-    background: var(--card);
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 22px;
+    background: var(--card); border-radius: 12px;
+    overflow: hidden; margin-bottom: 22px;
   }
 
   .row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    min-height: 50px;
-    padding: 9px 16px;
-    position: relative;
-    cursor: text;
+    display: flex; align-items: center; gap: 12px;
+    min-height: 50px; padding: 9px 16px;
+    position: relative; cursor: text;
   }
 
-  .row + .row::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 16px; right: 0;
-    height: 0.5px;
-    background: var(--sep);
+  .row + .row::before, .row + .rowgroup::before {
+    content: ""; position: absolute; top: 0; left: 16px; right: 0;
+    height: 0.5px; background: var(--sep);
   }
 
-  .row-label {
-    flex: 1;
-    min-width: 0;
-    font-size: 16px;
-  }
+  .row-label { flex: 1; min-width: 0; font-size: 16px; }
 
   .row-hint {
-    display: block;
-    font-size: 12px;
-    color: var(--label-2);
-    margin-top: 2px;
-    line-height: 1.3;
+    display: block; font-size: 12px; color: var(--label-2);
+    margin-top: 2px; line-height: 1.3;
   }
 
-  .row-val {
-    display: flex;
-    align-items: baseline;
-    gap: 4px;
-    flex: none;
-  }
-
-  .row-val .pre {
-    font-size: 15px;
-    color: var(--label-2);
-    font-variant-numeric: tabular-nums;
-  }
-
-  .row-val .unit {
-    font-size: 14px;
-    color: var(--label-2);
-    min-width: 0;
-  }
+  .row-val { display: flex; align-items: baseline; gap: 4px; flex: none; }
+  .row-val .pre { font-size: 15px; color: var(--label-2); }
+  .row-val .unit { font-size: 14px; color: var(--label-2); }
 
   input[type="number"] {
-    appearance: none;
-    -webkit-appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-size: 17px;
-    font-weight: 600;
+    appearance: none; -webkit-appearance: none;
+    border: none; background: transparent;
+    font: inherit; font-size: 17px; font-weight: 600;
     font-variant-numeric: tabular-nums;
-    color: var(--accent);
-    text-align: right;
-    padding: 4px 0;
-    width: 5.2em;
-    -webkit-user-select: text;
-    user-select: text;
+    color: var(--accent); text-align: right;
+    padding: 4px 0; width: 5.2em;
+    -webkit-user-select: text; user-select: text;
     border-radius: 6px;
   }
 
   input[type="number"]::-webkit-outer-spin-button,
-  input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   input[type="number"]:focus { outline: none; background: var(--fill); }
-
   input.narrow { width: 3.4em; }
   input.wide { width: 6.4em; }
 
-  /* ---------- Quadros principais ---------- */
+  .row.helper[hidden], .row.preco-cfg[hidden] { display: none; }
+
+  /* ---------- Quadros ---------- */
 
   .boxes {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-bottom: 10px;
+    display: grid; grid-template-columns: 1fr 1.5fr 1fr;
+    gap: 9px; margin-bottom: 10px;
   }
 
   .box {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 13px 6px 11px;
-    text-align: center;
-    cursor: text;
-    display: block;
-    border: 1.5px solid transparent;
+    background: var(--card); border-radius: 12px;
+    padding: 12px 4px 10px; text-align: center;
+    border: 1.5px solid transparent; cursor: text;
     transition: border-color 0.15s ease;
+    /* sem isto o quadro do tempo empurra os vizinhos e corta os números */
+    min-width: 0;
   }
 
   .box:focus-within { border-color: var(--accent); }
 
   .box-label {
-    display: block;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--label-2);
+    display: block; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--label-2);
   }
 
   .box input[type="number"] {
-    display: block;
-    width: 100%;
-    text-align: center;
-    font-size: 30px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--label);
-    padding: 3px 0 1px;
-    margin: 0;
+    display: block; width: 100%; min-width: 0; text-align: center;
+    font-size: 27px; font-weight: 600; letter-spacing: -0.025em;
+    color: var(--label); padding: 3px 0 1px;
   }
 
   .box input[type="number"]:focus { background: transparent; }
+  .box-unit { display: block; font-size: 12px; color: var(--label-2); font-weight: 500; }
 
-  .box-unit {
-    display: block;
-    font-size: 12px;
-    color: var(--label-2);
-    font-weight: 500;
+  /* Quadro do tempo: horas e minutos lado a lado */
+  .box-tempo .dupla { display: flex; align-items: baseline; justify-content: center; }
+  .box-tempo .dupla input { width: 1.75em; padding: 3px 0 1px; }
+  .box-tempo .dupla .u {
+    font-size: 12.5px; font-weight: 600; color: var(--label-2);
+    margin: 0 4px 0 1px;
   }
+  .box-tempo .dupla .u:last-child { margin-right: 0; }
 
   .boxes-hint {
-    padding: 0 4px;
-    margin: 0 0 22px;
-    font-size: 12.5px;
-    color: var(--label-2);
-    line-height: 1.4;
+    padding: 0 4px; margin: 0 0 22px;
+    font-size: 12.5px; color: var(--label-2); line-height: 1.45;
   }
 
-  /* ---------- Preço de venda ---------- */
+  /* ---------- Relatório ---------- */
 
-  .venda {
-    padding: 16px 16px 15px;
-    position: relative;
+  .rel { background: var(--card); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+
+  .rel-bloco { padding: 13px 16px 12px; position: relative; }
+  .rel-bloco + .rel-bloco::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0;
+    height: 0.5px; background: var(--sep);
   }
 
-  .venda-label {
-    display: block;
-    font-size: 12px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--label-2);
+  .rel-tit {
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--label-2); margin-bottom: 9px;
   }
 
-  .venda-value {
-    display: block;
-    font-size: 34px;
-    font-weight: 700;
-    letter-spacing: -0.025em;
-    font-variant-numeric: tabular-nums;
-    color: var(--c-energia);
-    margin: 2px 0 4px;
+  .rel-l {
+    display: flex; align-items: baseline; gap: 9px;
+    padding: 4px 0; font-size: 15px;
   }
 
-  .venda-meta {
-    display: block;
-    font-size: 13px;
-    color: var(--label-2);
-    font-variant-numeric: tabular-nums;
-    line-height: 1.4;
+  .rel-l .dot { width: 9px; height: 9px; border-radius: 3px; flex: none; align-self: center; }
+  .rel-l .nm { flex: 1; min-width: 0; }
+  .rel-l .nm small { display: block; font-size: 11.5px; color: var(--label-2); margin-top: 1px; }
+  .rel-l .pc { font-size: 12.5px; color: var(--label-2); font-variant-numeric: tabular-nums; }
+  .rel-l .vl { font-variant-numeric: tabular-nums; min-width: 5.6em; text-align: right; }
+
+  .rel-soma {
+    display: flex; align-items: baseline; gap: 9px;
+    margin-top: 7px; padding-top: 9px;
+    border-top: 1px solid var(--sep);
+    font-size: 15.5px; font-weight: 600;
   }
 
-  .venda-meta.ruim { color: var(--c-manut); font-weight: 500; }
+  .rel-soma .nm { flex: 1; }
+  .rel-soma .vl { font-variant-numeric: tabular-nums; min-width: 5.6em; text-align: right; }
 
-  .presets { display: flex; gap: 7px; flex-wrap: wrap; }
-
-  .preset {
-    appearance: none;
-    border: 1px solid var(--sep);
-    background: transparent;
-    color: var(--label);
-    font: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
-    padding: 9px 13px;
-    min-height: 40px;
-    border-radius: 9px;
-    cursor: pointer;
+  .rel-final {
+    background: var(--verde); color: #fff;
+    padding: 14px 16px 15px;
   }
 
-  .preset[aria-pressed="true"] {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-    font-weight: 600;
+  .rel-final .cap {
+    display: block; font-size: 11.5px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.85;
   }
 
-  .preset:active { opacity: 0.6; }
-
-  .venda-dica {
-    padding: 0 4px;
-    margin: -12px 0 22px;
-    font-size: 12.5px;
-    color: var(--label-2);
-    line-height: 1.45;
+  .rel-final .big {
+    display: block; font-size: 32px; font-weight: 700;
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+    margin: 1px 0 2px;
   }
 
-  /* Linha que abre/fecha a calculadora auxiliar */
+  .rel-final .nota { display: block; font-size: 13px; opacity: 0.9; font-variant-numeric: tabular-nums; }
+
+  .rel-alerta {
+    background: var(--c-manut); color: #fff;
+    padding: 11px 16px; font-size: 13.5px; font-weight: 500;
+  }
+
+  .rel-rodape {
+    padding: 0 4px; margin: 0 0 22px;
+    font-size: 12.5px; color: var(--label-2); line-height: 1.45;
+  }
+
+  /* ---------- Recolhíveis ---------- */
+
   .disclosure {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    color: var(--accent);
-    text-align: left;
-    cursor: pointer;
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    appearance: none; border: none; background: transparent;
+    font: inherit; color: var(--accent); text-align: left; cursor: pointer;
   }
 
   .disclosure:active { background: var(--fill); }
 
   .disclosure .chev {
-    flex: none;
-    font-size: 19px;
-    line-height: 1;
-    color: var(--label-3);
+    flex: none; font-size: 19px; line-height: 1; color: var(--label-3);
     transform: rotate(90deg);
     transition: transform 0.22s cubic-bezier(0.32,0.72,0,1);
   }
 
   .disclosure[aria-expanded="true"] .chev { transform: rotate(-90deg); }
 
-  /* `hidden` sozinho não basta: .row define display:flex e vence o
-     atributo. Sem isto a seção parece fechada e continua aberta. */
-  .row.helper[hidden],
-  .row.venda-cfg[hidden] { display: none; }
-
   .calc-note {
-    padding: 11px 16px 13px;
-    font-size: 12.5px;
-    color: var(--label-2);
-    font-variant-numeric: tabular-nums;
-    position: relative;
+    padding: 11px 16px 13px; font-size: 12.5px; color: var(--label-2);
+    font-variant-numeric: tabular-nums; position: relative;
   }
 
   .calc-note::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 16px; right: 0;
-    height: 0.5px;
-    background: var(--sep);
+    content: ""; position: absolute; top: 0; left: 16px; right: 0;
+    height: 0.5px; background: var(--sep);
   }
 
-  /* Detalhe / rodapé de seção */
-  .sec-note {
-    padding: 0 16px;
-    margin: -14px 0 22px;
-    font-size: 12.5px;
-    color: var(--label-2);
+  .explica {
+    padding: 12px 16px 14px; font-size: 12.5px; color: var(--label-2);
+    line-height: 1.5; position: relative;
+  }
+
+  .explica::before {
+    content: ""; position: absolute; top: 0; left: 16px; right: 0;
+    height: 0.5px; background: var(--sep);
+  }
+
+  .explica b { color: var(--label); font-weight: 600; }
+
+  /* ---------- Salvos e conta ---------- */
+
+  .saved {
+    display: flex; align-items: center; gap: 11px;
+    min-height: 58px; padding: 10px 16px; position: relative; width: 100%;
+    appearance: none; border: none; background: transparent;
+    font: inherit; text-align: left; color: var(--label); cursor: pointer;
+  }
+
+  .saved-item + .saved-item::before {
+    content: ""; position: absolute; top: 0; left: 16px; right: 0;
+    height: 0.5px; background: var(--sep);
+  }
+
+  .saved-item { position: relative; display: flex; align-items: stretch; }
+  .saved-item .saved { flex: 1; min-width: 0; }
+  .saved-body { flex: 1; min-width: 0; }
+
+  .saved-name {
+    font-size: 16px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .saved-meta {
+    font-size: 12.5px; color: var(--label-2); margin-top: 2px;
     font-variant-numeric: tabular-nums;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
-  /* Detalhamento */
-  .detail-row {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-height: 44px;
-    padding: 8px 16px;
-    position: relative;
-    font-size: 16px;
+  .saved-cost { flex: none; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--verde); }
+
+  .saved-link {
+    flex: none; display: flex; align-items: center;
+    padding: 0 16px 0 4px; font-size: 17px; color: var(--accent); text-decoration: none;
   }
 
-  .detail-row + .detail-row::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 16px; right: 0;
-    height: 0.5px;
-    background: var(--sep);
+  .del {
+    flex: none; appearance: none; border: none;
+    background: var(--c-manut); color: #fff;
+    font: inherit; font-size: 15px; font-weight: 500;
+    padding: 0 18px; cursor: pointer;
   }
 
-  .dot {
-    width: 10px; height: 10px;
-    border-radius: 3px;
-    flex: none;
+  .empty { padding: 18px 16px; font-size: 14px; color: var(--label-2); text-align: center; line-height: 1.45; }
+
+  .conta-row {
+    display: flex; align-items: center; gap: 11px;
+    min-height: 50px; padding: 10px 16px; position: relative; width: 100%;
+    appearance: none; border: none; background: transparent;
+    font: inherit; text-align: left; color: var(--label);
   }
 
-  .detail-row .nm { flex: 1; }
-
-  .detail-row .pc {
-    font-size: 13px;
-    color: var(--label-2);
-    font-variant-numeric: tabular-nums;
-    min-width: 3.2em;
-    text-align: right;
+  .conta-row + .conta-row::before {
+    content: ""; position: absolute; top: 0; left: 16px; right: 0;
+    height: 0.5px; background: var(--sep);
   }
 
-  .detail-row .vl {
-    font-variant-numeric: tabular-nums;
-    font-weight: 600;
-    min-width: 5.4em;
-    text-align: right;
-  }
+  button.conta-row { cursor: pointer; }
+  button.conta-row:active { background: var(--fill); }
+  .conta-row .body { flex: 1; min-width: 0; }
+  .conta-row .mail { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conta-row .estado { font-size: 12.5px; color: var(--label-2); margin-top: 2px; }
+  .conta-row .estado.ruim { color: var(--c-manut); }
+  .conta-row .chev { color: var(--label-3); font-size: 19px; flex: none; }
+  .conta-row.sair { color: var(--c-manut); justify-content: center; }
 
   .note {
-    display: flex;
-    gap: 10px;
-    padding: 13px 16px;
-    font-size: 13.5px;
-    color: var(--label-2);
-    line-height: 1.4;
+    display: flex; gap: 10px; padding: 13px 16px;
+    font-size: 13.5px; color: var(--label-2); line-height: 1.45;
   }
 
   .note b { color: var(--label); font-weight: 600; }
 
   .btn-row {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 50px;
-    padding: 9px 16px;
-    width: 100%;
-    appearance: none;
-    border: none;
-    background: var(--card);
-    color: var(--c-manut);
-    font: inherit;
-    font-size: 16px;
-    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 50px; padding: 9px 16px; width: 100%;
+    appearance: none; border: none; background: var(--card);
+    color: var(--c-manut); font: inherit; font-size: 16px; cursor: pointer;
   }
 
   .btn-row:active { background: var(--fill); }
 
-  footer {
-    text-align: center;
-    font-size: 12px;
-    color: var(--label-3);
-    padding: 4px 0 0;
-    font-variant-numeric: tabular-nums;
-  }
+  footer { text-align: center; font-size: 12px; color: var(--label-3); padding: 4px 0 0; }
 
-  /* ---------- Barra de título ---------- */
+  /* ---------- Folhas ---------- */
 
-  .nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 9px;
-  }
-
-  .nav-title {
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-
-  .nav-btn {
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-size: 16px;
-    color: var(--accent);
-    padding: 11px 0 11px 16px;
-    margin: -11px 0;
-    min-height: 44px;
-    cursor: pointer;
-    flex: none;
-  }
-
-  .nav-btn:active { opacity: 0.45; }
-  .nav-btn:disabled { color: var(--label-3); }
-
-  /* ---------- Cálculos salvos ---------- */
-
-  .sec-btn {
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-size: 14px;
-    font-weight: 500;
-    text-transform: none;
-    letter-spacing: 0;
-    color: var(--accent);
-    padding: 13px 0 13px 16px;
-    margin: -13px 0;
-    min-height: 44px;
-    cursor: pointer;
-  }
-
-  .sec-btn:active { opacity: 0.45; }
-
-  .saved {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-height: 58px;
-    padding: 10px 16px;
-    position: relative;
-    width: 100%;
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    text-align: left;
-    color: var(--label);
-    cursor: pointer;
-  }
-
-  .saved + .saved::before,
-  .saved-item + .saved-item::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 16px; right: 0;
-    height: 0.5px;
-    background: var(--sep);
-  }
-
-  .saved-item { position: relative; display: flex; align-items: stretch; }
-  .saved-item .saved { flex: 1; min-width: 0; }
-
-  .saved-body { flex: 1; min-width: 0; }
-
-  .saved-name {
-    font-size: 16px;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .saved-meta {
-    font-size: 12.5px;
-    color: var(--label-2);
-    margin-top: 2px;
-    font-variant-numeric: tabular-nums;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .saved-cost {
-    flex: none;
-    font-size: 16px;
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-    color: var(--accent);
-  }
-
-  .saved-link {
-    flex: none;
-    display: flex;
-    align-items: center;
-    padding: 0 16px 0 4px;
-    font-size: 17px;
-    color: var(--accent);
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .saved-link:active { opacity: 0.45; }
-
-  .del {
-    flex: none;
-    appearance: none;
-    border: none;
-    background: var(--c-manut);
-    color: #fff;
-    font: inherit;
-    font-size: 15px;
-    font-weight: 500;
-    padding: 0 18px;
-    cursor: pointer;
-  }
-
-  .del:active { opacity: 0.7; }
-
-  .empty {
-    padding: 18px 16px;
-    font-size: 14px;
-    color: var(--label-2);
-    text-align: center;
-    line-height: 1.45;
-  }
-
-  /* ---------- Folha de salvar ---------- */
-
-  .sheet-wrap {
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-  }
-
+  .sheet-wrap { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; justify-content: center; }
   .sheet-wrap[hidden] { display: none; }
-
-  .backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.42);
-    animation: fade 0.22s ease;
-  }
+  .backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.42); animation: fade 0.22s ease; }
 
   .sheet {
-    position: relative;
-    width: 100%;
-    max-width: 560px;
-    background: var(--bg);
-    border-radius: 14px 14px 0 0;
+    position: relative; width: 100%; max-width: 560px;
+    background: var(--bg); border-radius: 14px 14px 0 0;
     padding: 8px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 18px) calc(var(--safe-l) + 16px);
     animation: rise 0.3s cubic-bezier(0.32,0.72,0,1);
-    max-height: 92%;
-    overflow-y: auto;
+    max-height: 92%; overflow-y: auto;
   }
 
   @keyframes fade { from { opacity: 0; } }
   @keyframes rise { from { transform: translateY(100%); } }
 
-  .grabber {
-    width: 36px; height: 5px;
-    border-radius: 3px;
-    background: var(--label-3);
-    margin: 0 auto 12px;
-  }
-
-  .sheet h2 {
-    font-size: 17px;
-    font-weight: 600;
-    margin: 0 0 14px;
-    text-align: center;
-  }
-
+  .grabber { width: 36px; height: 5px; border-radius: 3px; background: var(--label-3); margin: 0 auto 12px; }
+  .sheet h2 { font-size: 17px; font-weight: 600; margin: 0 0 14px; text-align: center; }
   .sheet .group { margin-bottom: 16px; }
 
-  .sheet .row { cursor: text; }
-
-  .sheet input[type="text"],
-  .sheet input[type="url"] {
-    flex: 1;
-    min-width: 0;
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-size: 16px;
-    color: var(--label);
-    text-align: right;
-    padding: 4px 0;
-    -webkit-user-select: text;
-    user-select: text;
+  .sheet input[type="text"], .sheet input[type="url"],
+  .sheet input[type="email"], .sheet input[type="password"] {
+    flex: 1; min-width: 0; appearance: none; border: none; background: transparent;
+    font: inherit; font-size: 16px; color: var(--label); text-align: right;
+    padding: 4px 0; -webkit-user-select: text; user-select: text;
   }
 
   .sheet input::placeholder { color: var(--label-3); }
   .sheet input:focus { outline: none; }
 
+  .sheet-hint { font-size: 12.5px; color: var(--label-2); text-align: center; margin: 0 0 14px; line-height: 1.4; }
+  .sheet-hint.erro { color: var(--c-manut); font-weight: 500; }
   .sheet-actions { display: flex; gap: 10px; }
 
   .btn {
-    flex: 1;
-    appearance: none;
-    border: none;
-    border-radius: 12px;
-    font: inherit;
-    font-size: 17px;
-    font-weight: 600;
-    padding: 14px 12px;
-    cursor: pointer;
+    flex: 1; appearance: none; border: none; border-radius: 12px;
+    font: inherit; font-size: 17px; font-weight: 600; padding: 14px 12px; cursor: pointer;
   }
 
   .btn-main { background: var(--accent); color: #fff; }
   .btn-alt { background: var(--fill); color: var(--label); font-weight: 500; }
   .btn:active { opacity: 0.7; }
 
-  .sheet-hint {
-    font-size: 12.5px;
-    color: var(--label-2);
-    text-align: center;
-    margin: 0 0 14px;
-    line-height: 1.4;
-  }
-
-  .sheet-hint.erro { color: var(--c-manut); font-weight: 500; }
-
   .link-btn {
-    display: block;
-    width: 100%;
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-size: 15px;
-    color: var(--accent);
-    padding: 15px 12px 6px;
-    min-height: 44px;
-    cursor: pointer;
+    display: block; width: 100%; appearance: none; border: none; background: transparent;
+    font: inherit; font-size: 15px; color: var(--accent);
+    padding: 15px 12px 6px; min-height: 44px; cursor: pointer;
   }
 
-  .link-btn:active { opacity: 0.45; }
+  /* ---------- Aviso de versão ---------- */
 
-  .sheet input[type="email"],
-  .sheet input[type="password"] {
-    flex: 1;
-    min-width: 0;
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    font-size: 16px;
-    color: var(--label);
-    text-align: right;
-    padding: 4px 0;
-    -webkit-user-select: text;
-    user-select: text;
-  }
-
-  .sheet input[type="email"]:focus,
-  .sheet input[type="password"]:focus { outline: none; }
-
-  /* Conta */
-  .conta-row {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-height: 50px;
-    padding: 10px 16px;
-    position: relative;
-    width: 100%;
-    appearance: none;
-    border: none;
-    background: transparent;
-    font: inherit;
-    text-align: left;
-    color: var(--label);
-  }
-
-  .conta-row + .conta-row::before {
-    content: "";
-    position: absolute;
-    top: 0; left: 16px; right: 0;
-    height: 0.5px;
-    background: var(--sep);
-  }
-
-  button.conta-row { cursor: pointer; }
-  button.conta-row:active { background: var(--fill); }
-
-  .conta-row .body { flex: 1; min-width: 0; }
-
-  .conta-row .mail {
-    font-size: 16px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .conta-row .estado {
-    font-size: 12.5px;
-    color: var(--label-2);
-    margin-top: 2px;
-  }
-
-  .conta-row .estado.ruim { color: var(--c-manut); }
-
-  .conta-row .chev { color: var(--label-3); font-size: 19px; flex: none; }
-  .conta-row.sair { color: var(--c-manut); justify-content: center; }
-
-  /* Aviso de versão nova */
   .atualizar {
-    position: fixed;
-    left: 12px; right: 12px;
-    bottom: calc(var(--safe-b) + 12px);
-    z-index: 90;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--label);
-    color: var(--bg);
-    border-radius: 13px;
-    padding: 12px 14px;
+    position: fixed; left: 12px; right: 12px;
+    bottom: calc(var(--safe-b) + 12px); z-index: 90;
+    display: flex; align-items: center; gap: 12px;
+    background: var(--label); color: var(--bg);
+    border-radius: 13px; padding: 12px 14px;
     box-shadow: 0 8px 28px rgba(0,0,0,0.28);
     animation: rise 0.3s cubic-bezier(0.32,0.72,0,1);
-    max-width: 560px;
-    margin: 0 auto;
+    max-width: 560px; margin: 0 auto;
   }
 
   .atualizar[hidden] { display: none; }
   .atualizar span { flex: 1; font-size: 14.5px; }
 
   .atualizar button {
-    appearance: none;
-    border: none;
-    border-radius: 9px;
-    background: var(--accent);
-    color: #fff;
-    font: inherit;
-    font-size: 14.5px;
-    font-weight: 600;
-    padding: 9px 15px;
-    min-height: 40px;
-    cursor: pointer;
+    appearance: none; border: none; border-radius: 9px;
+    background: var(--accent); color: #fff;
+    font: inherit; font-size: 14.5px; font-weight: 600;
+    padding: 9px 15px; min-height: 40px; cursor: pointer;
   }
 
-  .atualizar button:active { opacity: 0.7; }
-
-  @media (max-width: 340px) {
+  @media (max-width: 360px) {
     .hero-value { font-size: 38px; }
-    .row-label { font-size: 15px; }
-    .nav-title { font-size: 18px; }
+    .nav-title { font-size: 17px; }
+    .boxes { gap: 7px; }
+    .box input[type="number"] { font-size: 22px; }
+    .box-tempo .dupla .u { font-size: 11px; margin: 0 2px 0 0; }
+    .box-label { font-size: 10px; }
+    .box-unit { font-size: 11px; }
+    .rel-l, .rel-soma { font-size: 14px; }
+    .rel-l .vl, .rel-soma .vl { min-width: 5em; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .backdrop, .sheet { animation: none; }
-    .bar span, .chev { transition: none; }
+    .backdrop, .sheet, .atualizar { animation: none; }
+    .chev { transition: none; }
   }
 </style>
 </head>
 <body>
 
-<!-- ============ RESULTADO FIXO ============ -->
 <header class="hero">
   <div class="nav">
     <span class="nav-title" id="navTitle">Custo 3D</span>
+    <button type="button" class="nav-btn" id="btnNovo">Novo</button>
     <button type="button" class="nav-btn" id="btnSalvar">Salvar</button>
   </div>
-
-  <div class="hero-top">
-    <span class="hero-cap" id="heroCap">Custo por peça</span>
-    <span class="hero-printer">Bambu Lab A1 · PLA</span>
-  </div>
-
-  <div class="hero-value"><span class="cur">R$</span><span id="heroValue">0,00</span></div>
-  <div class="hero-meta" id="heroMeta">&nbsp;</div>
-
-  <div class="bar" id="bar">
-    <span style="background:var(--c-material)"></span>
-    <span style="background:var(--c-energia)"></span>
-    <span style="background:var(--c-deprec)"></span>
-    <span style="background:var(--c-manut)"></span>
-  </div>
-
-  <div class="seg" role="tablist">
-    <button type="button" role="tab" id="segPeca" aria-selected="true">Por peça</button>
-    <button type="button" role="tab" id="segJob" aria-selected="false">Job inteiro</button>
-  </div>
+  <span class="hero-cap">Venda cada peça por</span>
+  <span class="hero-value" id="heroValue">R$ 0,00</span>
+  <span class="hero-sub" id="heroSub">&nbsp;</span>
 </header>
 
-<!-- ============ CONTEÚDO ============ -->
 <main>
 <div class="inner">
 
@@ -1023,45 +561,58 @@
       <input type="number" id="peso" value="45" min="0" step="1" inputmode="decimal">
       <span class="box-unit">gramas</span>
     </label>
-    <label class="box">
+    <div class="box box-tempo">
       <span class="box-label">Tempo</span>
-      <input type="number" id="tempo" value="3.5" min="0" step="0.1" inputmode="decimal">
-      <span class="box-unit">horas</span>
-    </label>
+      <span class="dupla">
+        <input type="number" id="tempoH" value="3" min="0" step="1" inputmode="numeric" aria-label="horas"><span class="u">h</span>
+        <input type="number" id="tempoM" value="30" min="0" max="59" step="5" inputmode="numeric" aria-label="minutos"><span class="u">min</span>
+      </span>
+      <span class="box-unit">de impressão</span>
+    </div>
     <label class="box">
       <span class="box-label">Peças</span>
       <input type="number" id="qtd" value="1" min="1" step="1" inputmode="numeric">
       <span class="box-unit">no job</span>
     </label>
   </div>
-  <p class="boxes-hint" id="boxesHint">Os três valores são do <b>job inteiro</b>, como aparecem no fatiador.</p>
+  <p class="boxes-hint">Valores do <b>job inteiro</b>, como o fatiador mostra. O peso já inclui purga e suporte.</p>
 
-  <div class="group" id="grupoAjustes">
-    <button type="button" class="row disclosure" id="ajustesToggle" aria-expanded="false">
+  <!-- ============ RELATÓRIO ============ -->
+  <div class="sec-head">
+    <span>Relatório</span>
+    <button type="button" class="sec-btn" id="btnCompartilhar">Compartilhar</button>
+  </div>
+  <div class="rel" id="relatorio"></div>
+  <p class="rel-rodape" id="relRodape"></p>
+
+  <!-- ============ AJUSTES DE CUSTO ============ -->
+  <div class="sec-head"><span>Quanto custa produzir</span></div>
+  <div class="group">
+    <button type="button" class="row disclosure" id="custoToggle" aria-expanded="false">
       <span class="row-label">Ajustes de custo
-        <span class="row-hint" id="ajustesResumo">Filamento, energia, máquina</span></span>
+        <span class="row-hint" id="custoResumo">Filamento, energia, máquina</span></span>
       <span class="chev">›</span>
     </button>
   </div>
 
   <div id="ajustes" hidden>
 
-  <div class="sec-head"><span>Material</span><span class="sec-total" id="sub-material">R$ 0,00</span></div>
+  <div class="sec-head"><span>Material</span><span class="sec-total" id="sub-material"></span></div>
   <div class="group">
     <label class="row">
       <span class="row-label">Filamento PLA
-        <span class="row-hint">sua faixa: R$ 85 a 100 o quilo</span></span>
+        <span class="row-hint">preço do quilo</span></span>
       <span class="row-val"><span class="pre">R$</span>
         <input type="number" id="precoKg" value="92.5" min="0" step="0.5" inputmode="decimal">
         <span class="unit">/kg</span></span>
     </label>
   </div>
 
-  <div class="sec-head"><span>Energia</span><span class="sec-total" id="sub-energia">R$ 0,00</span></div>
+  <div class="sec-head"><span>Energia</span></div>
   <div class="group">
     <label class="row">
       <span class="row-label">Tarifa
-        <span class="row-hint">da sua conta CEMIG</span></span>
+        <span class="row-hint">da sua conta de luz</span></span>
       <span class="row-val"><span class="pre">R$</span>
         <input type="number" id="tarifa" class="wide" value="0.92214" min="0" step="0.001" inputmode="decimal">
         <span class="unit">/kWh</span></span>
@@ -1075,23 +626,21 @@
     </label>
   </div>
 
-  <div class="sec-head"><span>Depreciação</span><span class="sec-total" id="sub-deprec">R$ 0,00</span></div>
+  <div class="sec-head"><span>Depreciação</span></div>
   <div class="group">
     <label class="row">
       <span class="row-label">Custo por hora
-        <span class="row-hint">quanto a impressora consome de si mesma por hora</span></span>
+        <span class="row-hint">quanto a impressora consome de si mesma</span></span>
       <span class="row-val"><span class="pre">R$</span>
         <input type="number" id="deprecHora" value="1.20" min="0" step="0.01" inputmode="decimal">
         <span class="unit">/h</span></span>
     </label>
-
     <button type="button" class="row disclosure" id="deprecToggle" aria-expanded="false">
       <span class="row-label">Calcular pelo valor da impressora</span>
       <span class="chev">›</span>
     </button>
-
     <label class="row helper" hidden>
-      <span class="row-label">Valor pago na A1</span>
+      <span class="row-label">Valor pago na impressora</span>
       <span class="row-val"><span class="pre">R$</span>
         <input type="number" id="valorImpressora" value="6000" min="0" step="50" inputmode="decimal"></span>
     </label>
@@ -1105,7 +654,7 @@
     <div class="calc-note helper" id="deprecCalc" hidden></div>
   </div>
 
-  <div class="sec-head"><span>Manutenção</span><span class="sec-total" id="sub-manut">R$ 0,00</span></div>
+  <div class="sec-head"><span>Manutenção</span></div>
   <div class="group">
     <label class="row">
       <span class="row-label">Custo por hora de máquina
@@ -1118,44 +667,16 @@
 
   </div><!-- /#ajustes -->
 
-  <div class="sec-head"><span>Detalhamento</span><span class="sec-total" id="detailCap">por peça</span></div>
-  <div class="group" id="detail"></div>
-
-  <div class="sec-head">
-    <span>Preço de venda</span>
-    <button type="button" class="sec-btn" id="btnCompartilhar">Compartilhar</button>
-  </div>
+  <!-- ============ AJUSTES DE PREÇO ============ -->
+  <div class="sec-head"><span>Como o preço é formado</span></div>
   <div class="group">
-    <div class="venda">
-      <span class="venda-label" id="vendaCap">Venda cada peça por</span>
-      <span class="venda-value" id="precoVenda">R$ 0,00</span>
-      <span class="venda-meta" id="vendaMeta"></span>
-    </div>
-
-    <button type="button" class="row disclosure" id="vendaToggle" aria-expanded="false">
-      <span class="row-label">Ajustar margem
-        <span class="row-hint" id="vendaResumo">2,5× o custo</span></span>
+    <button type="button" class="row disclosure" id="precoToggle" aria-expanded="false">
+      <span class="row-label">Ajustes de preço
+        <span class="row-hint" id="precoResumo"></span></span>
       <span class="chev">›</span>
     </button>
 
-    <label class="row venda-cfg" hidden>
-      <span class="row-label">Multiplicador
-        <span class="row-hint">quantas vezes o custo</span></span>
-      <span class="row-val">
-        <input type="number" id="multiplicador" class="narrow" value="2.5" min="1" step="0.1" inputmode="decimal">
-        <span class="unit">×</span></span>
-    </label>
-
-    <div class="row venda-cfg" hidden>
-      <span class="presets">
-        <button type="button" class="preset" data-mult="2">2×</button>
-        <button type="button" class="preset" data-mult="2.5">2,5×</button>
-        <button type="button" class="preset" data-mult="3">3×</button>
-        <button type="button" class="preset" data-mult="4">4×</button>
-      </span>
-    </div>
-
-    <label class="row venda-cfg" hidden>
+    <label class="row preco-cfg" hidden>
       <span class="row-label">Acabamento
         <span class="row-hint">minutos por peça: tirar suporte, lixar, montar</span></span>
       <span class="row-val">
@@ -1163,7 +684,7 @@
         <span class="unit">min</span></span>
     </label>
 
-    <label class="row venda-cfg" hidden>
+    <label class="row preco-cfg" hidden>
       <span class="row-label">Valor da sua hora
         <span class="row-hint">quanto vale seu tempo de trabalho</span></span>
       <span class="row-val"><span class="pre">R$</span>
@@ -1171,34 +692,54 @@
         <span class="unit">/h</span></span>
     </label>
 
-    <label class="row venda-cfg" hidden>
+    <label class="row preco-cfg" hidden>
+      <span class="row-label">Reserva para falhas
+        <span class="row-hint">peças que não prestam e você refaz</span></span>
+      <span class="row-val">
+        <input type="number" id="falhas" class="narrow" value="10" min="0" max="90" step="1" inputmode="decimal">
+        <span class="unit">%</span></span>
+    </label>
+
+    <label class="row preco-cfg" hidden>
+      <span class="row-label">Sua margem de lucro
+        <span class="row-hint">quanto sobra pra você, sobre o preço</span></span>
+      <span class="row-val">
+        <input type="number" id="margem" class="narrow" value="40" min="0" max="95" step="1" inputmode="decimal">
+        <span class="unit">%</span></span>
+    </label>
+
+    <label class="row preco-cfg" hidden>
       <span class="row-label">Taxa da plataforma
         <span class="row-hint">Shopee, Mercado Livre, maquininha — 0 se vender direto</span></span>
       <span class="row-val">
         <input type="number" id="taxaVenda" class="narrow" value="0" min="0" max="90" step="1" inputmode="decimal">
         <span class="unit">%</span></span>
     </label>
-  </div>
-  <p class="venda-dica" id="vendaDica"></p>
 
+    <div class="explica preco-cfg" hidden>
+      <b>Reserva para falhas:</b> se 1 em cada 10 impressões dá errado, você
+      gastou material e máquina numa peça que não vende — quem paga isso são
+      as que deram certo. 10% cobre esse caso.<br><br>
+      <b>Margem de lucro:</b> é sobre o preço, não sobre o custo. Com 40%, de
+      cada R$ 100 que entram, R$ 40 sobram pra você depois de pagar tudo.
+      Não existe número certo: 30% a 50% é onde costuma ficar quem vende peça
+      impressa, mas quem decide é você.
+    </div>
+  </div>
+
+  <!-- ============ SALVOS ============ -->
   <div class="sec-head">
     <span>Salvos</span>
     <button type="button" class="sec-btn" id="btnEditar" hidden>Editar</button>
   </div>
   <div class="group" id="listaSalvos"></div>
 
+  <!-- ============ CONTA ============ -->
   <div class="sec-head">
     <span>Conta</span>
     <button type="button" class="sec-btn" id="btnSync" hidden>Sincronizar</button>
   </div>
   <div class="group" id="blocoConta"></div>
-
-  <div class="group">
-    <div class="note">
-      <span>⚠️</span>
-      <div>Não inclui <b>embalagem, frete</b> nem peças perdidas por falha de impressão — esse risco sai do seu lucro, e é por isso que o multiplicador recomendado não é menor que 2×.</div>
-    </div>
-  </div>
 
   <div class="group">
     <button type="button" class="btn-row" id="reset">Restaurar valores padrão</button>
@@ -1220,7 +761,6 @@
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <div class="grabber"></div>
     <h2 id="sheetTitle">Salvar cálculo</h2>
-
     <div class="group">
       <label class="row">
         <span class="row-label">Nome</span>
@@ -1234,9 +774,7 @@
                autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
       </label>
     </div>
-
     <p class="sheet-hint" id="sheetHint"></p>
-
     <div class="sheet-actions">
       <button type="button" class="btn btn-alt" id="btnCancelar">Cancelar</button>
       <button type="button" class="btn btn-main" id="btnConfirmar">Salvar</button>
@@ -1250,7 +788,6 @@
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="authTitle">
     <div class="grabber"></div>
     <h2 id="authTitle">Entrar</h2>
-
     <div class="group">
       <label class="row">
         <span class="row-label">E-mail</span>
@@ -1263,14 +800,11 @@
                autocomplete="current-password" enterkeyhint="go">
       </label>
     </div>
-
-    <p class="sheet-hint" id="authHint">Seus cálculos ficam disponíveis em qualquer aparelho.</p>
-
+    <p class="sheet-hint" id="authHint"></p>
     <div class="sheet-actions">
       <button type="button" class="btn btn-alt" id="authCancelar">Cancelar</button>
       <button type="button" class="btn btn-main" id="authConfirmar">Entrar</button>
     </div>
-
     <button type="button" class="link-btn" id="authAlternar">Não tenho conta ainda</button>
   </div>
 </div>
@@ -1278,24 +812,24 @@
 <script src="/config.js"></script>
 <script>
   var DEFAULTS = {
-    peso: "45", tempo: "3.5", qtd: "1", precoKg: "92.5",
-    tarifa: "0.92214", potencia: "130", deprecHora: "1.20",
+    peso: "45", tempoH: "3", tempoM: "30", qtd: "1",
+    precoKg: "92.5", tarifa: "0.92214", potencia: "130", deprecHora: "1.20",
     valorImpressora: "6000", vidaUtil: "5000", manutHora: "0.20",
-    multiplicador: "2.5", acabamento: "10", valorHora: "30", taxaVenda: "0"
+    acabamento: "10", valorHora: "30", falhas: "10", margem: "40", taxaVenda: "0"
   };
 
   var ids = Object.keys(DEFAULTS);
   var el = {};
   ids.forEach(function (id) { el[id] = document.getElementById(id); });
 
-  var STORAGE_KEY = "calc3d.custoImpressao.v2";
-  var OLD_KEY = "calc3d.custoImpressao.v1";
-  var VIEW_KEY = "calc3d.view.v1";
+  var STORAGE_KEY = "calc3d.campos.v3";
+  var ANTIGO_V2 = "calc3d.custoImpressao.v2";
+  var ANTIGO_V1 = "calc3d.custoImpressao.v1";
   var SAVED_KEY = "calc3d.salvos.v1";
   var ACTIVE_KEY = "calc3d.ativo.v1";
-  var view = "peca";
+  var SESSAO_KEY = "calc3d.sessao.v1";
 
-  var ultimo = { total: 0, porPeca: 0, qtd: 1, tempo: 0 };
+  var ultimo = {};
   var salvos = [];
   var activeId = null;
   var editando = false;
@@ -1305,45 +839,10 @@
   };
   var brl = function (n) { return "R$ " + nf(n, 2); };
 
-  function salvar() {
-    try {
-      var data = {};
-      ids.forEach(function (id) { data[id] = el[id].value; });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      localStorage.setItem(VIEW_KEY, view);
-    } catch (e) { /* indisponível */ }
-  }
-
-  function carregar() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-
-      /* Sem dados novos? Aproveita os da versão anterior, convertendo o
-         custo por hora a partir de valor, vida útil e horas já rodadas. */
-      if (!raw) {
-        var old = localStorage.getItem(OLD_KEY);
-        if (old) {
-          var o = JSON.parse(old);
-          var valor = parseFloat(o.valorImpressora);
-          var vida = parseFloat(o.vidaUtil);
-          var rodadas = parseFloat(o.horasRodadas) || 0;
-          if (isFinite(valor) && isFinite(vida)) {
-            var rest = Math.max(vida - rodadas, 1);
-            o.deprecHora = (valor / rest).toFixed(2);
-          }
-          raw = JSON.stringify(o);
-        }
-      }
-
-      if (raw) {
-        var data = JSON.parse(raw);
-        ids.forEach(function (id) {
-          if (data[id] !== undefined && el[id]) el[id].value = data[id];
-        });
-      }
-      var v = localStorage.getItem(VIEW_KEY);
-      if (v === "job" || v === "peca") view = v;
-    } catch (e) { /* ignora */ }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
   }
 
   function num(id, min) {
@@ -1352,280 +851,266 @@
     return min !== undefined ? Math.max(v, min) : v;
   }
 
+  /* Horas decimais viravam erro fácil (3,5 lido como "três e meia"), então
+     agora entram como h e min separados. */
+  function tempoHoras() {
+    return Math.max(num("tempoH", 0), 0) + Math.max(num("tempoM", 0), 0) / 60;
+  }
+
+  function tempoTexto(h) {
+    if (!(h > 0)) return "0 min";
+    var t = Math.round(h * 60), hh = Math.floor(t / 60), mm = t % 60;
+    if (!hh) return mm + " min";
+    return hh + "h" + (mm ? String(mm).padStart(2, "0") : "");
+  }
+
+  /* ================= Persistência dos campos ================= */
+
+  function salvarCampos() {
+    try {
+      var d = {};
+      ids.forEach(function (id) { d[id] = el[id].value; });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+    } catch (e) { /* indisponível */ }
+  }
+
+  function migraTempo(o) {
+    if (o.tempoH === undefined && o.tempo !== undefined) {
+      var h = parseFloat(o.tempo);
+      if (isFinite(h)) {
+        var t = Math.round(h * 60);
+        o.tempoH = String(Math.floor(t / 60));
+        o.tempoM = String(t % 60);
+      }
+    }
+    if (o.deprecHora === undefined) {
+      var val = parseFloat(o.valorImpressora), vida = parseFloat(o.vidaUtil);
+      var rod = parseFloat(o.horasRodadas) || 0;
+      if (isFinite(val) && isFinite(vida)) {
+        o.deprecHora = (val / Math.max(vida - rod, 1)).toFixed(2);
+      }
+    }
+    return o;
+  }
+
+  function carregarCampos() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        var velho = localStorage.getItem(ANTIGO_V2) || localStorage.getItem(ANTIGO_V1);
+        if (velho) raw = JSON.stringify(migraTempo(JSON.parse(velho)));
+      }
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      ids.forEach(function (id) {
+        if (d[id] !== undefined && el[id]) el[id].value = d[id];
+      });
+    } catch (e) { /* ignora */ }
+  }
+
+  /* ================= Cálculo ================= */
+
   function calc() {
-    var tempo = num("tempo", 0);
+    var horas = tempoHoras();
     var qtd = Math.max(Math.floor(num("qtd", 1)), 1);
 
+    /* --- custo de fabricar, do job inteiro --- */
     var material = (num("peso", 0) / 1000) * num("precoKg", 0);
-    var energia  = (num("potencia", 0) / 1000) * tempo * num("tarifa", 0);
+    var energia  = (num("potencia", 0) / 1000) * horas * num("tarifa", 0);
+    var deprec   = num("deprecHora", 0) * horas;
+    var manut    = num("manutHora", 0) * horas;
+    var fabJob   = material + energia + deprec + manut;
+    var fab      = fabJob / qtd;
 
-    var deprec = num("deprecHora", 0) * tempo;
+    /* --- por peça --- */
+    var acab   = (num("acabamento", 0) / 60) * num("valorHora", 0);
+    var falhas = Math.min(Math.max(num("falhas", 0), 0), 90) / 100;
+    var reserva = (fab + acab) * falhas;
+    var custoReal = fab + acab + reserva;
 
-    var manut = num("manutHora", 0) * tempo;
+    var margem = Math.min(Math.max(num("margem", 0), 0), 95) / 100;
+    var taxa   = Math.min(Math.max(num("taxaVenda", 0), 0), 90) / 100;
 
-    var total = material + energia + deprec + manut;
-    var div = view === "peca" ? qtd : 1;
+    var precoSemTaxa = custoReal / (1 - margem);
+    var precoFinal   = precoSemTaxa / (1 - taxa);
+    var valorTaxa    = precoFinal - precoSemTaxa;
+    var lucro        = precoSemTaxa - custoReal;
 
-    document.getElementById("sub-material").textContent = brl(material);
-    document.getElementById("sub-energia").textContent  = brl(energia);
-    document.getElementById("sub-deprec").textContent   = brl(deprec);
-    document.getElementById("sub-manut").textContent    = brl(manut);
+    /* --- cabeçalho --- */
+    document.getElementById("heroValue").textContent = brl(precoFinal);
+    document.getElementById("heroSub").innerHTML =
+      qtd > 1
+        ? "<b>" + qtd + " peças</b> = " + brl(precoFinal * qtd) + " · " + tempoTexto(horas) + " de impressão"
+        : "Job de 1 peça · " + tempoTexto(horas) + " de impressão";
 
-    /* Resultado principal */
-    document.getElementById("heroValue").textContent = nf(total / div, 2);
-    document.getElementById("heroCap").textContent =
-      view === "peca" ? "Custo por peça" : "Custo do job";
-
-    var meta;
-    if (view === "peca") {
-      meta = qtd > 1
-        ? brl(total) + " do job ÷ " + qtd + " peças · " + nf(tempo, 1) + " h"
-        : "Job de 1 peça · " + nf(tempo, 1) + " h de impressão";
-    } else {
-      meta = qtd + (qtd > 1 ? " peças" : " peça") + " · " + nf(tempo, 1) + " h · " +
-             brl(total / qtd) + " cada";
-    }
-    document.getElementById("heroMeta").textContent = meta;
-
-    /* Barra proporcional */
-    var parts = [
-      { nm: "Material",    val: material, cls: "--c-material" },
-      { nm: "Energia",     val: energia,  cls: "--c-energia" },
-      { nm: "Depreciação", val: deprec,   cls: "--c-deprec" },
-      { nm: "Manutenção",  val: manut,    cls: "--c-manut" }
-    ];
-
-    var segs = document.getElementById("bar").children;
-    for (var i = 0; i < parts.length; i++) {
-      var frac = total > 0 ? parts[i].val / total : 0.25;
-      segs[i].style.flexGrow = frac;
-      segs[i].style.flexBasis = "0";
-      segs[i].style.opacity = frac < 0.004 ? "0" : "1";
-    }
-
-    /* Detalhamento */
-    document.getElementById("detailCap").textContent =
-      view === "peca" ? "por peça" : "do job";
-
-    document.getElementById("detail").innerHTML = parts.map(function (p) {
-      var pct = total > 0 ? (p.val / total) * 100 : 0;
-      return '<div class="detail-row">' +
-             '<span class="dot" style="background:var(' + p.cls + ')"></span>' +
-             '<span class="nm">' + p.nm + '</span>' +
-             '<span class="pc">' + pct.toFixed(0) + '%</span>' +
-             '<span class="vl">' + brl(p.val / div) + '</span>' +
-             '</div>';
-    }).join("");
-
-    calcVenda(total / qtd, qtd);
-
-    resumoAjustes();
-    atualizaDicaBoxes();
-    salvar();
-  }
-
-  /* Preço de venda.
-     custo da peça = fabricação + seu tempo de acabamento
-     preço-alvo    = custo × multiplicador
-     preço final   = preço-alvo ajustado para a taxa da plataforma, senão
-                     a comissão sairia do seu lucro em vez do preço. */
-  function calcVenda(custoFab, qtd) {
-    var mult = Math.max(num("multiplicador", 0), 0);
-    var maoObra = (num("acabamento", 0) / 60) * num("valorHora", 0);
-    var taxa = Math.min(Math.max(num("taxaVenda", 0), 0), 90) / 100;
-
-    var custoPeca = custoFab + maoObra;
-    var alvo = custoPeca * mult;
-    var precoFinal = taxa > 0 ? alvo / (1 - taxa) : alvo;
-    var recebe = precoFinal * (1 - taxa);
-    var lucro = recebe - custoPeca;
-    var margem = precoFinal > 0 ? (lucro / precoFinal) * 100 : 0;
-
-    var div = view === "peca" ? 1 : qtd;
-
-    document.getElementById("vendaCap").textContent =
-      view === "peca" ? "Venda cada peça por" : "Venda o lote inteiro por";
-    document.getElementById("precoVenda").textContent = brl(precoFinal * div);
-
-    var meta = "Lucro " + brl(lucro * div) + " · margem " + nf(margem, 0) + "%";
-    if (taxa > 0) meta += "\nVocê recebe " + brl(recebe * div) + " após a taxa";
-    if (maoObra > 0) meta += "\nInclui " + brl(maoObra * div) + " do seu tempo de acabamento";
-
-    var metaEl = document.getElementById("vendaMeta");
-    metaEl.textContent = meta;
-    metaEl.style.whiteSpace = "pre-line";
-    metaEl.className = "venda-meta" + (lucro <= 0 ? " ruim" : "");
-
-    document.getElementById("vendaResumo").textContent =
-      nf(mult, 1).replace(",0", "") + "× o custo" +
-      (maoObra > 0 ? " · " + nf(num("acabamento", 0), 0) + " min de acabamento" : "") +
-      (taxa > 0 ? " · taxa " + nf(taxa * 100, 0) + "%" : "");
-
-    /* Recomendação: abaixo de 2× normalmente não sobra nada depois de
-       falhas de impressão, retrabalho e peça perdida. */
-    var dica;
-    if (mult < 1.01) dica = "⚠️ Multiplicador 1× é preço de custo: você não ganha nada.";
-    else if (mult < 2) dica = "⚠️ Abaixo de 2× costuma não cobrir falhas de impressão e retrabalho.";
-    else if (mult <= 3) dica = "✅ Faixa recomendada para venda ao consumidor: 2,5× a 3× o custo.";
-    else dica = "Acima de 3× funciona para peças exclusivas ou sob encomenda; para item de catálogo pode espantar o cliente.";
-    document.getElementById("vendaDica").textContent = dica;
-
-    [].forEach.call(document.querySelectorAll(".preset"), function (b) {
-      b.setAttribute("aria-pressed", parseFloat(b.getAttribute("data-mult")) === mult);
+    montaRelatorio({
+      material: material / qtd, energia: energia / qtd, deprec: deprec / qtd, manut: manut / qtd,
+      fab: fab, acab: acab, reserva: reserva, custoReal: custoReal,
+      lucro: lucro, valorTaxa: valorTaxa, precoSemTaxa: precoSemTaxa, precoFinal: precoFinal,
+      qtd: qtd, horas: horas, falhas: falhas, margem: margem, taxa: taxa
     });
 
+    resumos();
+
     ultimo = {
-      total: custoFab * qtd, porPeca: custoFab, qtd: qtd, tempo: num("tempo", 0),
-      preco: precoFinal, lucro: lucro, margem: margem
+      total: fabJob, porPeca: fab, custoReal: custoReal, qtd: qtd, tempo: horas,
+      preco: precoFinal, lucro: lucro, margem: margem * 100
     };
+
+    salvarCampos();
   }
 
-  function setView(v) {
-    view = v;
-    document.getElementById("segPeca").setAttribute("aria-selected", v === "peca");
-    document.getElementById("segJob").setAttribute("aria-selected", v === "job");
-    calc();
+  function linha(cor, nome, sub, pct, valor) {
+    return '<div class="rel-l">' +
+      (cor ? '<span class="dot" style="background:var(' + cor + ')"></span>' : "") +
+      '<span class="nm">' + nome + (sub ? '<small>' + sub + '</small>' : "") + '</span>' +
+      (pct !== null ? '<span class="pc">' + pct + '</span>' : "") +
+      '<span class="vl">' + valor + '</span></div>';
   }
 
-  carregar();
+  function soma(nome, valor) {
+    return '<div class="rel-soma"><span class="nm">' + nome + '</span>' +
+           '<span class="vl">' + valor + '</span></div>';
+  }
+
+  function montaRelatorio(d) {
+    var pc = function (v) { return d.fab > 0 ? nf((v / d.fab) * 100, 0) + "%" : "—"; };
+
+    var html = "";
+
+    html += '<div class="rel-bloco">' +
+      '<div class="rel-tit">Custo de fabricar' + (d.qtd > 1 ? " — cada peça" : "") + '</div>' +
+      linha("--c-material", "Filamento", null, pc(d.material), brl(d.material)) +
+      linha("--c-energia", "Energia", null, pc(d.energia), brl(d.energia)) +
+      linha("--c-deprec", "Depreciação", null, pc(d.deprec), brl(d.deprec)) +
+      linha("--c-manut", "Manutenção", null, pc(d.manut), brl(d.manut)) +
+      soma("Custo de fabricar", brl(d.fab)) +
+      '</div>';
+
+    var subAcab = nf(num("acabamento", 0), 0) + " min × " + brl(num("valorHora", 0)) + "/h";
+    var subRes = nf(d.falhas * 100, 0) + "% do que veio acima";
+
+    html += '<div class="rel-bloco">' +
+      '<div class="rel-tit">Seu trabalho e seu risco</div>' +
+      linha("--c-trabalho", "Acabamento", subAcab, null, brl(d.acab)) +
+      linha("--c-risco", "Reserva para falhas", subRes, null, brl(d.reserva)) +
+      soma("Custo real da peça", brl(d.custoReal)) +
+      '</div>';
+
+    html += '<div class="rel-bloco">' +
+      '<div class="rel-tit">Preço</div>' +
+      linha(null, "Custo real", null, null, brl(d.custoReal)) +
+      linha(null, "Seu lucro", "margem de " + nf(d.margem * 100, 0) + "%", null, brl(d.lucro)) +
+      (d.taxa > 0
+        ? linha(null, "Taxa da plataforma", nf(d.taxa * 100, 0) + "% do preço", null, brl(d.valorTaxa))
+        : "") +
+      '</div>';
+
+    var recebe = d.taxa > 0
+      ? "Você recebe " + brl(d.precoSemTaxa) + " · "
+      : "";
+    var vezes = d.fab > 0 ? nf(d.precoFinal / d.fab, 1) + "× o custo de fabricar" : "";
+
+    html += '<div class="rel-final">' +
+      '<span class="cap">Preço final' + (d.qtd > 1 ? " — cada peça" : "") + '</span>' +
+      '<span class="big">' + brl(d.precoFinal) + '</span>' +
+      '<span class="nota">' + recebe + vezes + '</span>' +
+      '</div>';
+
+    if (d.lucro <= 0) {
+      html += '<div class="rel-alerta">⚠️ Com esses números você não ganha nada. ' +
+              'Aumente a margem ou reduza o custo.</div>';
+    }
+
+    document.getElementById("relatorio").innerHTML = html;
+
+    document.getElementById("relRodape").innerHTML =
+      "Fora da conta: <b>embalagem, frete, impostos</b> e o tempo que você gasta " +
+      "anunciando e atendendo. Se vende com frequência, some isso à sua margem.";
+  }
+
+  function resumos() {
+    document.getElementById("custoResumo").textContent =
+      "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
+      "/h máquina · " + nf(num("potencia", 0), 0) + " W";
+
+    document.getElementById("precoResumo").textContent =
+      nf(num("acabamento", 0), 0) + " min de acabamento · " +
+      nf(num("falhas", 0), 0) + "% falhas · " +
+      nf(num("margem", 0), 0) + "% de margem" +
+      (num("taxaVenda", 0) > 0 ? " · " + nf(num("taxaVenda", 0), 0) + "% de taxa" : "");
+  }
+
+  /* Minutos acima de 59 viram hora, para 3h90 não existir. */
+  function normalizaMinutos() {
+    var m = num("tempoM", 0);
+    if (m >= 60) {
+      el.tempoH.value = String(Math.floor(num("tempoH", 0) + Math.floor(m / 60)));
+      el.tempoM.value = String(Math.round(m % 60));
+      calc();
+    }
+  }
 
   ids.forEach(function (id) {
     el[id].addEventListener("input", calc);
-    /* seleciona tudo ao focar: digitar substitui o valor */
     el[id].addEventListener("focus", function () {
-      var input = this;
-      setTimeout(function () { try { input.select(); } catch (e) {} }, 1);
+      var i = this;
+      setTimeout(function () { try { i.select(); } catch (e) {} }, 1);
     });
   });
 
-  /* --- Calculadora auxiliar da depreciação --- */
+  el.tempoM.addEventListener("blur", normalizaMinutos);
 
-  var helpers = document.querySelectorAll(".helper");
-  var toggle = document.getElementById("deprecToggle");
+  /* ---- Recolhíveis ---- */
 
-  /* Abrir apenas mostra a conta — nunca sobrescreve um valor
-     que você tenha digitado à mão. */
-  function setHelper(open) {
-    toggle.setAttribute("aria-expanded", open ? "true" : "false");
-    for (var i = 0; i < helpers.length; i++) helpers[i].hidden = !open;
-    if (open) notaDeprec();
+  function recolhivel(botaoId, alvos, chave, aoAbrir) {
+    var b = document.getElementById(botaoId);
+    function set(abrir, gravar) {
+      b.setAttribute("aria-expanded", abrir ? "true" : "false");
+      if (typeof alvos === "function") alvos(abrir);
+      else for (var i = 0; i < alvos.length; i++) alvos[i].hidden = !abrir;
+      if (abrir && aoAbrir) aoAbrir();
+      if (gravar !== false && chave) {
+        try { localStorage.setItem(chave, abrir ? "1" : "0"); } catch (e) {}
+      }
+    }
+    b.addEventListener("click", function () {
+      set(b.getAttribute("aria-expanded") !== "true");
+    });
+    var inicial = false;
+    try { inicial = localStorage.getItem(chave) === "1"; } catch (e) {}
+    set(inicial, false);
+    return set;
   }
+
+  var ajustesEl = document.getElementById("ajustes");
+  recolhivel("custoToggle", function (abrir) { ajustesEl.hidden = !abrir; }, "calc3d.ajustes.v1");
+  recolhivel("precoToggle", document.querySelectorAll(".preco-cfg"), "calc3d.preco.v1");
+
+  /* ---- Calculadora de depreciação ---- */
 
   function porHoraCalculado() {
     return num("valorImpressora", 0) / Math.max(num("vidaUtil", 1), 1);
   }
 
   function notaDeprec() {
-    var porHora = porHoraCalculado();
+    var ph = porHoraCalculado();
     var txt = brl(num("valorImpressora", 0)) + " ÷ " + nf(Math.max(num("vidaUtil", 1), 1), 0) +
-              " h = R$ " + nf(porHora, 2) + " por hora";
-
-    /* Avisa quando o valor em uso não é o desta conta */
-    if (Math.abs(porHora - num("deprecHora", 0)) >= 0.005) {
-      txt += " · edite um campo acima para aplicar";
-    }
+              " h = R$ " + nf(ph, 2) + " por hora";
+    if (Math.abs(ph - num("deprecHora", 0)) >= 0.005) txt += " · edite um campo acima para aplicar";
     document.getElementById("deprecCalc").textContent = txt;
   }
 
-  /* Valor pago ÷ vida útil total = custo por hora. Fixo: não sobe
-     conforme a impressora envelhece, então não precisa de manutenção. */
+  recolhivel("deprecToggle", document.querySelectorAll(".helper"), null, notaDeprec);
+
   function recalcDeprec() {
     el.deprecHora.value = porHoraCalculado().toFixed(2);
     notaDeprec();
     calc();
   }
 
-  toggle.addEventListener("click", function () {
-    setHelper(toggle.getAttribute("aria-expanded") !== "true");
-  });
-
   el.valorImpressora.addEventListener("input", recalcDeprec);
   el.vidaUtil.addEventListener("input", recalcDeprec);
-
-  /* --- Ajustes de custo: recolhidos, porque no dia a dia só peso,
-         tempo e quantidade mudam. --- */
-
-  var AJUSTES_KEY = "calc3d.ajustes.v1";
-  var ajustesEl = document.getElementById("ajustes");
-  var ajustesToggle = document.getElementById("ajustesToggle");
-
-  function setAjustes(abrir, gravar) {
-    ajustesToggle.setAttribute("aria-expanded", abrir ? "true" : "false");
-    ajustesEl.hidden = !abrir;
-    if (gravar !== false) {
-      try { localStorage.setItem(AJUSTES_KEY, abrir ? "1" : "0"); } catch (e) { /* ignora */ }
-    }
-  }
-
-  /* Mostra os valores em uso mesmo com a seção fechada, para não
-     esconder que existe um preço de filamento por trás da conta. */
-  function resumoAjustes() {
-    document.getElementById("ajustesResumo").textContent =
-      "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
-      "/h máquina · " + nf(num("potencia", 0), 0) + " W";
-  }
-
-  ajustesToggle.addEventListener("click", function () {
-    setAjustes(ajustesToggle.getAttribute("aria-expanded") !== "true");
-  });
-
-  try {
-    setAjustes(localStorage.getItem(AJUSTES_KEY) === "1", false);
-  } catch (e) { setAjustes(false, false); }
-
-  /* --- Ajuste de margem, recolhido --- */
-
-  var VENDA_KEY = "calc3d.venda.v1";
-  var vendaToggle = document.getElementById("vendaToggle");
-  var vendaCfg = document.querySelectorAll(".venda-cfg");
-
-  function setVendaCfg(abrir, gravar) {
-    vendaToggle.setAttribute("aria-expanded", abrir ? "true" : "false");
-    for (var i = 0; i < vendaCfg.length; i++) vendaCfg[i].hidden = !abrir;
-    if (gravar !== false) {
-      try { localStorage.setItem(VENDA_KEY, abrir ? "1" : "0"); } catch (e) { /* ignora */ }
-    }
-  }
-
-  vendaToggle.addEventListener("click", function () {
-    setVendaCfg(vendaToggle.getAttribute("aria-expanded") !== "true");
-  });
-
-  try {
-    setVendaCfg(localStorage.getItem(VENDA_KEY) === "1", false);
-  } catch (e) { setVendaCfg(false, false); }
-
-  [].forEach.call(document.querySelectorAll(".preset"), function (b) {
-    b.addEventListener("click", function () {
-      el.multiplicador.value = b.getAttribute("data-mult");
-      calc();
-    });
-  });
-
-  /* 3,5 h lido como "três e meia" é erro fácil: mostramos em h/min. */
-  function horasEmTexto(h) {
-    if (!(h > 0)) return "";
-    var t = Math.round(h * 60);
-    var hh = Math.floor(t / 60), mm = t % 60;
-    return hh ? (hh + "h" + (mm ? String(mm).padStart(2, "0") : "")) : (mm + " min");
-  }
-
-  function atualizaDicaBoxes() {
-    var t = horasEmTexto(num("tempo", 0));
-    document.getElementById("boxesHint").innerHTML =
-      "Os três valores são do <b>job inteiro</b>, como aparecem no fatiador" +
-      (t ? " — <b>" + nf(num("tempo", 0), 2).replace(/,?0+$/, "") + " h = " + t + "</b>." : ".");
-  }
-
-  document.getElementById("segPeca").addEventListener("click", function () { setView("peca"); });
-  document.getElementById("segJob").addEventListener("click", function () { setView("job"); });
-
-  document.getElementById("reset").addEventListener("click", function () {
-    if (!confirm("Restaurar todos os valores padrão?\n\nIsso desfaz o preço do filamento, a depreciação, o multiplicador e o resto dos ajustes. Os cálculos salvos não são afetados.")) return;
-    ids.forEach(function (id) { el[id].value = DEFAULTS[id]; });
-    setAtivo(null);
-    calc();
-  });
 
   /* ================= Cálculos salvos ================= */
 
@@ -1635,13 +1120,6 @@
   var fNome = document.getElementById("fNome");
   var fLink = document.getElementById("fLink");
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
-  }
-
-  /* Só http(s): impede que um link colado vire javascript: */
   function linkSeguro(raw) {
     var s = String(raw || "").trim();
     if (!s) return "";
@@ -1662,21 +1140,22 @@
       salvos = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(salvos)) salvos = [];
     } catch (e) { salvos = []; }
-
-    /* Itens salvos antes da sincronização não têm estes campos */
     salvos.forEach(function (s) {
       if (!s.atualizado_em) s.atualizado_em = s.data || new Date(0).toISOString();
       if (typeof s.excluido !== "boolean") s.excluido = false;
     });
   }
 
-  function visiveis() {
-    return salvos.filter(function (s) { return !s.excluido; });
-  }
+  function visiveis() { return salvos.filter(function (s) { return !s.excluido; }); }
 
   function gravarSalvos() {
     try { localStorage.setItem(SAVED_KEY, JSON.stringify(salvos)); }
     catch (e) { alert("Não foi possível salvar: o armazenamento do navegador está cheio ou bloqueado."); }
+  }
+
+  function acharSalvo(id) {
+    for (var i = 0; i < salvos.length; i++) if (salvos[i].id === id) return salvos[i];
+    return null;
   }
 
   function setAtivo(id) {
@@ -1686,13 +1165,8 @@
     try {
       if (id) localStorage.setItem(ACTIVE_KEY, id);
       else localStorage.removeItem(ACTIVE_KEY);
-    } catch (e) { /* ignora */ }
+    } catch (e) {}
     renderSalvos();
-  }
-
-  function acharSalvo(id) {
-    for (var i = 0; i < salvos.length; i++) if (salvos[i].id === id) return salvos[i];
-    return null;
   }
 
   function renderSalvos() {
@@ -1702,7 +1176,7 @@
       editando = false;
       btnEditar.textContent = "Editar";
       listaEl.innerHTML =
-        '<div class="empty">Nenhum cálculo salvo ainda.<br>Toque em <b>Salvar</b> lá em cima para guardar este.</div>';
+        '<div class="empty">Nenhum cálculo salvo ainda.<br>Use <b>Salvar</b>, no topo da tela, para guardar este.</div>';
       return;
     }
 
@@ -1725,7 +1199,7 @@
         '</button>' +
         (s.link
           ? '<a class="saved-link" href="' + esc(s.link) + '" target="_blank" rel="noopener noreferrer" ' +
-            'title="' + esc(dominio(s.link)) + '" aria-label="Abrir ' + esc(dominio(s.link)) + '">↗</a>'
+            'aria-label="Abrir ' + esc(dominio(s.link)) + '">↗</a>'
           : "") +
       '</div>';
     }).join("");
@@ -1736,8 +1210,6 @@
     if (del) {
       var alvo = acharSalvo(del.getAttribute("data-del"));
       if (alvo && confirm('Excluir "' + alvo.nome + '"?')) {
-        /* Marca em vez de apagar: sem isso o item voltaria do outro
-           aparelho na próxima sincronização. */
         alvo.excluido = true;
         alvo.atualizado_em = new Date().toISOString();
         gravarSalvos();
@@ -1751,41 +1223,11 @@
     if (carregar) {
       var it = acharSalvo(carregar.getAttribute("data-load"));
       if (!it) return;
-      ids.forEach(function (id) {
-        if (it.valores[id] !== undefined) el[id].value = it.valores[id];
-      });
+      var v = migraTempo(JSON.parse(JSON.stringify(it.valores)));
+      ids.forEach(function (id) { if (v[id] !== undefined) el[id].value = v[id]; });
       setAtivo(it.id);
       calc();
       document.querySelector("main").scrollTo({ top: 0, behavior: "smooth" });
-    }
-  });
-
-  /* Compartilhar: no iPhone abre a folha nativa (WhatsApp, Mensagens…);
-     onde não existe, cai para a área de transferência. */
-  document.getElementById("btnCompartilhar").addEventListener("click", function () {
-    var it = activeId ? acharSalvo(activeId) : null;
-    var qtd = ultimo.qtd;
-    var linhas = [
-      it ? it.nome : "Peça impressa em 3D",
-      "",
-      "Preço: " + brl(ultimo.preco) + " por peça",
-      qtd > 1 ? "Lote de " + qtd + " peças: " + brl(ultimo.preco * qtd) : null,
-      "Tempo de impressão: " + horasEmTexto(ultimo.tempo) + " o job",
-      "Material: PLA",
-      it && it.link ? "" : null,
-      it && it.link ? it.link : null
-    ].filter(function (l) { return l !== null; });
-
-    var texto = linhas.join("\n");
-
-    if (navigator.share) {
-      navigator.share({ text: texto }).catch(function () { /* cancelou */ });
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(texto).then(function () {
-        alert("Orçamento copiado.");
-      }).catch(function () { alert(texto); });
-    } else {
-      alert(texto);
     }
   });
 
@@ -1795,7 +1237,41 @@
     renderSalvos();
   });
 
-  /* ---- Folha ---- */
+  /* Novo cálculo: zera só a peça, preserva os ajustes que você configurou. */
+  document.getElementById("btnNovo").addEventListener("click", function () {
+    ["peso", "tempoH", "tempoM", "qtd"].forEach(function (id) { el[id].value = DEFAULTS[id]; });
+    setAtivo(null);
+    calc();
+    document.querySelector("main").scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Restaurar todos os valores padrão?\n\nIsso desfaz o preço do filamento, a depreciação, a margem e o resto dos ajustes. Os cálculos salvos não são afetados.")) return;
+    ids.forEach(function (id) { el[id].value = DEFAULTS[id]; });
+    setAtivo(null);
+    calc();
+  });
+
+  document.getElementById("btnCompartilhar").addEventListener("click", function () {
+    var it = activeId ? acharSalvo(activeId) : null;
+    var linhas = [
+      it ? it.nome : "Peça impressa em 3D",
+      "",
+      "Preço: " + brl(ultimo.preco) + " por peça",
+      ultimo.qtd > 1 ? "Lote de " + ultimo.qtd + " peças: " + brl(ultimo.preco * ultimo.qtd) : null,
+      "Tempo de impressão: " + tempoTexto(ultimo.tempo) + " o job",
+      "Material: PLA",
+      it && it.link ? "" : null,
+      it && it.link ? it.link : null
+    ].filter(function (l) { return l !== null; });
+
+    var texto = linhas.join("\n");
+    if (navigator.share) navigator.share({ text: texto }).catch(function () {});
+    else if (navigator.clipboard) navigator.clipboard.writeText(texto)
+      .then(function () { alert("Orçamento copiado."); })
+      .catch(function () { alert(texto); });
+    else alert(texto);
+  });
 
   function abrirSheet() {
     var it = activeId ? acharSalvo(activeId) : null;
@@ -1803,7 +1279,7 @@
     fLink.value = it ? it.link : "";
     document.getElementById("sheetHint").textContent = it
       ? 'Manter o nome atualiza "' + it.nome + '". Mudar o nome cria um novo.'
-      : "Custo por peça de " + brl(ultimo.porPeca) + " · " + nf(ultimo.tempo, 1) + " h";
+      : "Venda " + brl(ultimo.preco) + " · custo " + brl(ultimo.custoReal) + " · " + tempoTexto(ultimo.tempo);
     sheet.hidden = false;
     setTimeout(function () { fNome.focus(); }, 60);
   }
@@ -1833,10 +1309,9 @@
     };
 
     var atual = activeId ? acharSalvo(activeId) : null;
-
     if (atual && atual.nome === nome) {
       dados.id = atual.id;
-      dados.data = atual.data;           /* preserva a data de criação */
+      dados.data = atual.data;
       salvos[salvos.indexOf(atual)] = dados;
     } else {
       dados.id = String(Date.now()) + Math.random().toString(36).slice(2, 7);
@@ -1860,33 +1335,13 @@
     });
   });
 
-  document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape" && !sheet.hidden) fecharSheet();
-  });
-
-  /* Reabrir o app volta ao cálculo em que você estava, do mesmo jeito
-     que ficaria se nunca tivesse fechado. */
-  function restaurarAtivo() {
-    var atualId = null;
-    try { atualId = localStorage.getItem(ACTIVE_KEY); } catch (e) { /* ignora */ }
-    if (atualId && acharSalvo(atualId)) setAtivo(atualId);
-  }
-
   /* ================= Conta e sincronização ================= */
 
-  /* Vem de config.js. Ausente ou vazio = app funciona normalmente, só sem
-     sincronizar. A chave anon é pública por desenho: quem protege os dados
-     é o Row Level Security no banco. */
   var CFG = window.CALC3D_CONFIG || {};
   var SUPA_URL = String(CFG.url || "").replace(/\/+$/, "");
   var SUPA_KEY = String(CFG.key || "");
 
-  var SESSAO_KEY = "calc3d.sessao.v1";
-  var sessao = null;
-  var sincronizando = false;
-  var ultimoSync = null;
-  var erroSync = "";
-  var modoCriar = false;
+  var sessao = null, sincronizando = false, ultimoSync = null, erroSync = "", modoCriar = false;
 
   var blocoConta = document.getElementById("blocoConta");
   var btnSync = document.getElementById("btnSync");
@@ -1909,7 +1364,7 @@
     try {
       if (s) localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
       else localStorage.removeItem(SESSAO_KEY);
-    } catch (e) { /* ignora */ }
+    } catch (e) {}
   }
 
   function api(caminho, opcoes) {
@@ -1944,12 +1399,9 @@
     });
   }
 
-  /* Renova o token quando vence. Sessão inválida derruba o login em vez
-     de ficar tentando para sempre. */
   function tokenValido() {
     if (!sessao) return Promise.reject(new Error("Sem sessão"));
     if (Date.now() < sessao.expira_em) return Promise.resolve(sessao.access_token);
-
     return api("/auth/v1/token?grant_type=refresh_token", {
       method: "POST",
       body: JSON.stringify({ refresh_token: sessao.refresh_token })
@@ -1962,26 +1414,27 @@
     });
   }
 
-  function autenticar(criar) {
-    var email = aEmail.value.trim();
-    var senha = aSenha.value;
+  function erroAuth(msg) {
+    authHint.textContent = msg || (modoCriar
+      ? "Escolha uma senha de pelo menos 8 caracteres."
+      : "Seus cálculos ficam disponíveis em qualquer aparelho.");
+    authHint.className = msg ? "sheet-hint erro" : "sheet-hint";
+  }
 
+  function autenticar(criar) {
+    var email = aEmail.value.trim(), senha = aSenha.value;
     if (!email || email.indexOf("@") < 0) { erroAuth("Digite um e-mail válido."); return; }
     if (senha.length < 8) { erroAuth("A senha precisa de pelo menos 8 caracteres."); return; }
 
     erroAuth("");
     document.getElementById("authConfirmar").disabled = true;
 
-    var caminho = criar ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
-
-    api(caminho, { method: "POST", body: JSON.stringify({ email: email, password: senha }) })
+    api(criar ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password",
+        { method: "POST", body: JSON.stringify({ email: email, password: senha }) })
       .then(function (d) {
         if (!d.access_token) {
-          /* Acontece quando a confirmação por e-mail está ligada */
           erroAuth("Conta criada. Confirme pelo link enviado ao seu e-mail e entre em seguida.");
-          modoCriar = false;
-          renderAuth();
-          return;
+          modoCriar = false; renderAuth(); return;
         }
         guardarToken(d);
         aSenha.value = "";
@@ -1998,15 +1451,6 @@
       })
       .then(function () { document.getElementById("authConfirmar").disabled = false; });
   }
-
-  function erroAuth(msg) {
-    authHint.textContent = msg || (modoCriar
-      ? "Escolha uma senha de pelo menos 8 caracteres."
-      : "Seus cálculos ficam disponíveis em qualquer aparelho.");
-    authHint.className = msg ? "sheet-hint erro" : "sheet-hint";
-  }
-
-  /* ---- Conversão entre o formato local e o do banco ---- */
 
   function paraRemoto(s) {
     return {
@@ -2026,47 +1470,37 @@
     };
   }
 
-  /* Vence quem foi alterado por último. Exclusões viajam como marcas
-     (excluido: true) — some a linha e o item voltaria do outro aparelho. */
   function mesclar(locais, remotos) {
     var mapa = {};
     locais.forEach(function (s) { mapa[s.id] = s; });
-
     remotos.forEach(function (r) {
       var atual = mapa[r.id];
       if (!atual || String(r.atualizado_em) > String(atual.atualizado_em)) mapa[r.id] = r;
     });
-
     return Object.keys(mapa).map(function (k) { return mapa[k]; })
       .sort(function (a, b) { return String(b.data).localeCompare(String(a.data)); });
   }
 
   function sincronizar() {
     if (!configurado() || !sessao || sincronizando) return Promise.resolve();
-    sincronizando = true;
-    erroSync = "";
-    renderConta();
+    sincronizando = true; erroSync = ""; renderConta();
 
     return tokenValido().then(function (tk) {
-      var auth = { "Authorization": "Bearer " + tk };
-
-      return api("/rest/v1/calculos?select=*", { headers: auth }).then(function (remotos) {
-        var mesclado = mesclar(salvos, (remotos || []).map(doRemoto));
-        salvos = mesclado;
-        gravarSalvos();
-
-        var payload = mesclado.map(paraRemoto);
-        if (!payload.length) return null;
-
-        return api("/rest/v1/calculos", {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer " + tk,
-            "Prefer": "resolution=merge-duplicates,return=minimal"
-          },
-          body: JSON.stringify(payload)
+      return api("/rest/v1/calculos?select=*", { headers: { "Authorization": "Bearer " + tk } })
+        .then(function (remotos) {
+          salvos = mesclar(salvos, (remotos || []).map(doRemoto));
+          gravarSalvos();
+          var payload = salvos.map(paraRemoto);
+          if (!payload.length) return null;
+          return api("/rest/v1/calculos", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + tk,
+              "Prefer": "resolution=merge-duplicates,return=minimal"
+            },
+            body: JSON.stringify(payload)
+          });
         });
-      });
     }).then(function () {
       ultimoSync = Date.now();
       renderSalvos();
@@ -2090,18 +1524,15 @@
   function renderConta() {
     if (!configurado()) {
       btnSync.hidden = true;
-      blocoConta.innerHTML =
-        '<div class="conta-row"><span class="body">' +
+      blocoConta.innerHTML = '<div class="conta-row"><span class="body">' +
         '<span class="mail">Sincronização não configurada</span>' +
-        '<span class="estado">Os cálculos ficam só neste aparelho.</span>' +
-        '</span></div>';
+        '<span class="estado">Os cálculos ficam só neste aparelho.</span></span></div>';
       return;
     }
 
     if (!sessao) {
       btnSync.hidden = true;
-      blocoConta.innerHTML =
-        '<button type="button" class="conta-row" id="irEntrar"><span class="body">' +
+      blocoConta.innerHTML = '<button type="button" class="conta-row" id="irEntrar"><span class="body">' +
         '<span class="mail">Entrar para sincronizar</span>' +
         '<span class="estado">Use os mesmos cálculos em outros aparelhos.</span>' +
         '</span><span class="chev">›</span></button>';
@@ -2127,26 +1558,20 @@
 
     document.getElementById("btnSair").addEventListener("click", function () {
       if (!confirm("Sair da conta? Os cálculos continuam neste aparelho.")) return;
-      gravarSessao(null);
-      ultimoSync = null;
-      erroSync = "";
-      renderConta();
+      gravarSessao(null); ultimoSync = null; erroSync = ""; renderConta();
     });
   }
 
   function renderAuth() {
     document.getElementById("authTitle").textContent = modoCriar ? "Criar conta" : "Entrar";
     document.getElementById("authConfirmar").textContent = modoCriar ? "Criar conta" : "Entrar";
-    document.getElementById("authAlternar").textContent =
-      modoCriar ? "Já tenho conta" : "Não tenho conta ainda";
+    document.getElementById("authAlternar").textContent = modoCriar ? "Já tenho conta" : "Não tenho conta ainda";
     aSenha.setAttribute("autocomplete", modoCriar ? "new-password" : "current-password");
     erroAuth("");
   }
 
   function abrirAuth() {
-    modoCriar = false;
-    aSenha.value = "";
-    renderAuth();
+    modoCriar = false; aSenha.value = ""; renderAuth();
     sheetAuth.hidden = false;
     setTimeout(function () { if (!aEmail.value) aEmail.focus(); else aSenha.focus(); }, 60);
   }
@@ -2154,10 +1579,7 @@
   document.getElementById("authCancelar").addEventListener("click", function () { sheetAuth.hidden = true; });
   document.getElementById("authBackdrop").addEventListener("click", function () { sheetAuth.hidden = true; });
   document.getElementById("authConfirmar").addEventListener("click", function () { autenticar(modoCriar); });
-  document.getElementById("authAlternar").addEventListener("click", function () {
-    modoCriar = !modoCriar;
-    renderAuth();
-  });
+  document.getElementById("authAlternar").addEventListener("click", function () { modoCriar = !modoCriar; renderAuth(); });
 
   [aEmail, aSenha].forEach(function (f) {
     f.addEventListener("keydown", function (ev) {
@@ -2168,23 +1590,30 @@
   btnSync.addEventListener("click", function () { sincronizar(); });
 
   document.addEventListener("keydown", function (ev) {
-    if (ev.key === "Escape" && !sheetAuth.hidden) sheetAuth.hidden = true;
+    if (ev.key !== "Escape") return;
+    if (!sheet.hidden) fecharSheet();
+    if (!sheetAuth.hidden) sheetAuth.hidden = true;
   });
 
-  /* Voltou a internet ou o app voltou ao primeiro plano: tenta de novo */
   window.addEventListener("online", function () { sincronizar(); });
-  document.addEventListener("visibilitychange", function () {
-    if (!document.hidden) sincronizar();
-  });
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) sincronizar(); });
 
+  function restaurarAtivo() {
+    var id = null;
+    try { id = localStorage.getItem(ACTIVE_KEY); } catch (e) {}
+    if (id && acharSalvo(id)) setAtivo(id);
+  }
+
+  /* ================= Arranque ================= */
+
+  carregarCampos();
   lerSalvos();
   lerSessao();
   renderSalvos();
   restaurarAtivo();
   renderConta();
+  calc();
   if (sessao) sincronizar();
-
-  setView(view);
 
   /* Versão nova publicada: avisa em vez de exigir fechar o app à força. */
   if ("serviceWorker" in navigator) {
@@ -2194,13 +1623,11 @@
           var novo = reg.installing;
           if (!novo) return;
           novo.addEventListener("statechange", function () {
-            /* controller existente = já havia versão rodando, logo é update */
             if (novo.state === "installed" && navigator.serviceWorker.controller) {
               document.getElementById("aviso").hidden = false;
             }
           });
         });
-
         document.addEventListener("visibilitychange", function () {
           if (!document.hidden) reg.update().catch(function () {});
         });
@@ -2208,9 +1635,7 @@
     });
   }
 
-  document.getElementById("avisoBtn").addEventListener("click", function () {
-    location.reload();
-  });
+  document.getElementById("avisoBtn").addEventListener("click", function () { location.reload(); });
 </script>
 </body>
 </html>

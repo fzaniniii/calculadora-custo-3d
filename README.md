@@ -24,17 +24,20 @@ cria um novo. Tudo fica só no seu aparelho (localStorage), sem servidor.
 
 ## Preço de venda
 
-Além do custo, o app sugere por quanto vender. A conta é:
+O preço é montado em partes, sem multiplicador mágico:
 
-1. **Custo da peça** = fabricação + seu tempo de acabamento (minutos × valor da sua hora)
-2. **Preço-alvo** = custo × multiplicador
-3. **Preço final** = preço-alvo ajustado para a taxa da plataforma
+1. **Custo de fabricar** — filamento, energia, depreciação, manutenção
+2. **+ Acabamento** — minutos por peça × valor da sua hora
+3. **+ Reserva para falhas** — % sobre o que veio acima; a peça que deu
+   errado foi paga com material e máquina, e quem cobre isso são as que
+   deram certo
+4. **+ Sua margem de lucro** — sobre o preço, não sobre o custo. Com 40%,
+   de cada R$ 100 que entram, R$ 40 sobram
+5. **+ Taxa da plataforma** — entra no preço em vez de sair do seu lucro
 
-O passo 3 importa: sem ele, a comissão do Shopee ou do Mercado Livre sairia
-do seu lucro em vez de entrar no preço. Com 20% de taxa, um alvo de R$ 36,21
-vira R$ 45,26 no anúncio — e você continua recebendo os R$ 36,21.
+O relatório mostra cada linha, e o "N× o custo" aparece no fim como
+consequência, não como entrada.
 
-**Multiplicador recomendado: 2,5× a 3×** para venda ao consumidor. Abaixo de
-2× normalmente não cobre falhas de impressão, retrabalho e peça perdida.
+Fora da conta: embalagem, frete, impostos e o tempo de anunciar e atender.
 
-O botão **Compartilhar** monta um orçamento pronto para mandar no WhatsApp.
+O botão **Compartilhar** monta um orçamento pronto para o WhatsApp.
