@@ -396,6 +396,76 @@
     line-height: 1.4;
   }
 
+  /* ---------- Preço de venda ---------- */
+
+  .venda {
+    padding: 16px 16px 15px;
+    position: relative;
+  }
+
+  .venda-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--label-2);
+  }
+
+  .venda-value {
+    display: block;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-energia);
+    margin: 2px 0 4px;
+  }
+
+  .venda-meta {
+    display: block;
+    font-size: 13px;
+    color: var(--label-2);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.4;
+  }
+
+  .venda-meta.ruim { color: var(--c-manut); font-weight: 500; }
+
+  .presets { display: flex; gap: 7px; flex-wrap: wrap; }
+
+  .preset {
+    appearance: none;
+    border: 1px solid var(--sep);
+    background: transparent;
+    color: var(--label);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    padding: 9px 13px;
+    min-height: 40px;
+    border-radius: 9px;
+    cursor: pointer;
+  }
+
+  .preset[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .preset:active { opacity: 0.6; }
+
+  .venda-dica {
+    padding: 0 4px;
+    margin: -12px 0 22px;
+    font-size: 12.5px;
+    color: var(--label-2);
+    line-height: 1.45;
+  }
+
   /* Linha que abre/fecha a calculadora auxiliar */
   .disclosure {
     display: flex;
@@ -859,6 +929,44 @@
   .conta-row .chev { color: var(--label-3); font-size: 19px; flex: none; }
   .conta-row.sair { color: var(--c-manut); justify-content: center; }
 
+  /* Aviso de versão nova */
+  .atualizar {
+    position: fixed;
+    left: 12px; right: 12px;
+    bottom: calc(var(--safe-b) + 12px);
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--label);
+    color: var(--bg);
+    border-radius: 13px;
+    padding: 12px 14px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.28);
+    animation: rise 0.3s cubic-bezier(0.32,0.72,0,1);
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .atualizar[hidden] { display: none; }
+  .atualizar span { flex: 1; font-size: 14.5px; }
+
+  .atualizar button {
+    appearance: none;
+    border: none;
+    border-radius: 9px;
+    background: var(--accent);
+    color: #fff;
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 9px 15px;
+    min-height: 40px;
+    cursor: pointer;
+  }
+
+  .atualizar button:active { opacity: 0.7; }
+
   @media (max-width: 340px) {
     .hero-value { font-size: 38px; }
     .row-label { font-size: 15px; }
@@ -923,7 +1031,7 @@
       <span class="box-unit">no job</span>
     </label>
   </div>
-  <p class="boxes-hint">Os três valores são do <b>job inteiro</b>, como aparecem no fatiador — peso já com purga e suporte.</p>
+  <p class="boxes-hint" id="boxesHint">Os três valores são do <b>job inteiro</b>, como aparecem no fatiador.</p>
 
   <div class="group" id="grupoAjustes">
     <button type="button" class="row disclosure" id="ajustesToggle" aria-expanded="false">
@@ -1011,6 +1119,66 @@
   <div class="group" id="detail"></div>
 
   <div class="sec-head">
+    <span>Preço de venda</span>
+    <button type="button" class="sec-btn" id="btnCompartilhar">Compartilhar</button>
+  </div>
+  <div class="group">
+    <div class="venda">
+      <span class="venda-label" id="vendaCap">Venda cada peça por</span>
+      <span class="venda-value" id="precoVenda">R$ 0,00</span>
+      <span class="venda-meta" id="vendaMeta"></span>
+    </div>
+
+    <button type="button" class="row disclosure" id="vendaToggle" aria-expanded="false">
+      <span class="row-label">Ajustar margem
+        <span class="row-hint" id="vendaResumo">2,5× o custo</span></span>
+      <span class="chev">›</span>
+    </button>
+
+    <label class="row venda-cfg" hidden>
+      <span class="row-label">Multiplicador
+        <span class="row-hint">quantas vezes o custo</span></span>
+      <span class="row-val">
+        <input type="number" id="multiplicador" class="narrow" value="2.5" min="1" step="0.1" inputmode="decimal">
+        <span class="unit">×</span></span>
+    </label>
+
+    <div class="row venda-cfg" hidden>
+      <span class="presets">
+        <button type="button" class="preset" data-mult="2">2×</button>
+        <button type="button" class="preset" data-mult="2.5">2,5×</button>
+        <button type="button" class="preset" data-mult="3">3×</button>
+        <button type="button" class="preset" data-mult="4">4×</button>
+      </span>
+    </div>
+
+    <label class="row venda-cfg" hidden>
+      <span class="row-label">Acabamento
+        <span class="row-hint">minutos por peça: tirar suporte, lixar, montar</span></span>
+      <span class="row-val">
+        <input type="number" id="acabamento" class="narrow" value="10" min="0" step="1" inputmode="decimal">
+        <span class="unit">min</span></span>
+    </label>
+
+    <label class="row venda-cfg" hidden>
+      <span class="row-label">Valor da sua hora
+        <span class="row-hint">quanto vale seu tempo de trabalho</span></span>
+      <span class="row-val"><span class="pre">R$</span>
+        <input type="number" id="valorHora" value="30" min="0" step="1" inputmode="decimal">
+        <span class="unit">/h</span></span>
+    </label>
+
+    <label class="row venda-cfg" hidden>
+      <span class="row-label">Taxa da plataforma
+        <span class="row-hint">Shopee, Mercado Livre, maquininha — 0 se vender direto</span></span>
+      <span class="row-val">
+        <input type="number" id="taxaVenda" class="narrow" value="0" min="0" max="90" step="1" inputmode="decimal">
+        <span class="unit">%</span></span>
+    </label>
+  </div>
+  <p class="venda-dica" id="vendaDica"></p>
+
+  <div class="sec-head">
     <span>Salvos</span>
     <button type="button" class="sec-btn" id="btnEditar" hidden>Editar</button>
   </div>
@@ -1037,6 +1205,11 @@
 
 </div>
 </main>
+
+<div class="atualizar" id="aviso" hidden>
+  <span>Nova versão disponível</span>
+  <button type="button" id="avisoBtn">Atualizar</button>
+</div>
 
 <!-- ============ FOLHA: SALVAR ============ -->
 <div class="sheet-wrap" id="sheet" hidden>
@@ -1104,7 +1277,8 @@
   var DEFAULTS = {
     peso: "45", tempo: "3.5", qtd: "1", precoKg: "92.5",
     tarifa: "0.92214", potencia: "130", deprecHora: "1.20",
-    valorImpressora: "6000", vidaUtil: "5000", manutHora: "0.20"
+    valorImpressora: "6000", vidaUtil: "5000", manutHora: "0.20",
+    multiplicador: "2.5", acabamento: "10", valorHora: "30", taxaVenda: "0"
   };
 
   var ids = Object.keys(DEFAULTS);
@@ -1240,10 +1414,67 @@
              '</div>';
     }).join("");
 
-    ultimo = { total: total, porPeca: total / qtd, qtd: qtd, tempo: tempo };
+    calcVenda(total / qtd, qtd);
 
     resumoAjustes();
+    atualizaDicaBoxes();
     salvar();
+  }
+
+  /* Preço de venda.
+     custo da peça = fabricação + seu tempo de acabamento
+     preço-alvo    = custo × multiplicador
+     preço final   = preço-alvo ajustado para a taxa da plataforma, senão
+                     a comissão sairia do seu lucro em vez do preço. */
+  function calcVenda(custoFab, qtd) {
+    var mult = Math.max(num("multiplicador", 0), 0);
+    var maoObra = (num("acabamento", 0) / 60) * num("valorHora", 0);
+    var taxa = Math.min(Math.max(num("taxaVenda", 0), 0), 90) / 100;
+
+    var custoPeca = custoFab + maoObra;
+    var alvo = custoPeca * mult;
+    var precoFinal = taxa > 0 ? alvo / (1 - taxa) : alvo;
+    var recebe = precoFinal * (1 - taxa);
+    var lucro = recebe - custoPeca;
+    var margem = precoFinal > 0 ? (lucro / precoFinal) * 100 : 0;
+
+    var div = view === "peca" ? 1 : qtd;
+
+    document.getElementById("vendaCap").textContent =
+      view === "peca" ? "Venda cada peça por" : "Venda o lote inteiro por";
+    document.getElementById("precoVenda").textContent = brl(precoFinal * div);
+
+    var meta = "Lucro " + brl(lucro * div) + " · margem " + nf(margem, 0) + "%";
+    if (taxa > 0) meta += "\nVocê recebe " + brl(recebe * div) + " após a taxa";
+    if (maoObra > 0) meta += "\nInclui " + brl(maoObra * div) + " do seu tempo de acabamento";
+
+    var metaEl = document.getElementById("vendaMeta");
+    metaEl.textContent = meta;
+    metaEl.style.whiteSpace = "pre-line";
+    metaEl.className = "venda-meta" + (lucro <= 0 ? " ruim" : "");
+
+    document.getElementById("vendaResumo").textContent =
+      nf(mult, 1).replace(",0", "") + "× o custo" +
+      (maoObra > 0 ? " · " + nf(num("acabamento", 0), 0) + " min de acabamento" : "") +
+      (taxa > 0 ? " · taxa " + nf(taxa * 100, 0) + "%" : "");
+
+    /* Recomendação: abaixo de 2× normalmente não sobra nada depois de
+       falhas de impressão, retrabalho e peça perdida. */
+    var dica;
+    if (mult < 1.01) dica = "⚠️ Multiplicador 1× é preço de custo: você não ganha nada.";
+    else if (mult < 2) dica = "⚠️ Abaixo de 2× costuma não cobrir falhas de impressão e retrabalho.";
+    else if (mult <= 3) dica = "✅ Faixa recomendada para venda ao consumidor: 2,5× a 3× o custo.";
+    else dica = "Acima de 3× funciona para peças exclusivas ou sob encomenda; para item de catálogo pode espantar o cliente.";
+    document.getElementById("vendaDica").textContent = dica;
+
+    [].forEach.call(document.querySelectorAll(".preset"), function (b) {
+      b.setAttribute("aria-pressed", parseFloat(b.getAttribute("data-mult")) === mult);
+    });
+
+    ultimo = {
+      total: custoFab * qtd, porPeca: custoFab, qtd: qtd, tempo: num("tempo", 0),
+      preco: precoFinal, lucro: lucro, margem: margem
+    };
   }
 
   function setView(v) {
@@ -1339,6 +1570,50 @@
     setAjustes(localStorage.getItem(AJUSTES_KEY) === "1", false);
   } catch (e) { setAjustes(false, false); }
 
+  /* --- Ajuste de margem, recolhido --- */
+
+  var VENDA_KEY = "calc3d.venda.v1";
+  var vendaToggle = document.getElementById("vendaToggle");
+  var vendaCfg = document.querySelectorAll(".venda-cfg");
+
+  function setVendaCfg(abrir, gravar) {
+    vendaToggle.setAttribute("aria-expanded", abrir ? "true" : "false");
+    for (var i = 0; i < vendaCfg.length; i++) vendaCfg[i].hidden = !abrir;
+    if (gravar !== false) {
+      try { localStorage.setItem(VENDA_KEY, abrir ? "1" : "0"); } catch (e) { /* ignora */ }
+    }
+  }
+
+  vendaToggle.addEventListener("click", function () {
+    setVendaCfg(vendaToggle.getAttribute("aria-expanded") !== "true");
+  });
+
+  try {
+    setVendaCfg(localStorage.getItem(VENDA_KEY) === "1", false);
+  } catch (e) { setVendaCfg(false, false); }
+
+  [].forEach.call(document.querySelectorAll(".preset"), function (b) {
+    b.addEventListener("click", function () {
+      el.multiplicador.value = b.getAttribute("data-mult");
+      calc();
+    });
+  });
+
+  /* 3,5 h lido como "três e meia" é erro fácil: mostramos em h/min. */
+  function horasEmTexto(h) {
+    if (!(h > 0)) return "";
+    var t = Math.round(h * 60);
+    var hh = Math.floor(t / 60), mm = t % 60;
+    return hh ? (hh + "h" + (mm ? String(mm).padStart(2, "0") : "")) : (mm + " min");
+  }
+
+  function atualizaDicaBoxes() {
+    var t = horasEmTexto(num("tempo", 0));
+    document.getElementById("boxesHint").innerHTML =
+      "Os três valores são do <b>job inteiro</b>, como aparecem no fatiador" +
+      (t ? " — <b>" + nf(num("tempo", 0), 2).replace(/,?0+$/, "") + " h = " + t + "</b>." : ".");
+  }
+
   document.getElementById("segPeca").addEventListener("click", function () { setView("peca"); });
   document.getElementById("segJob").addEventListener("click", function () { setView("job"); });
 
@@ -1430,9 +1705,10 @@
     listaEl.innerHTML = lista.map(function (s) {
       var data = new Date(s.data);
       var quando = isNaN(data) ? "" : data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-      var meta = nf(s.qtd, 0) + (s.qtd > 1 ? " peças" : " peça") + " · " + nf(s.tempo, 1) + " h" +
-                 (quando ? " · " + quando : "");
+      var meta = "custo " + brl(s.porPeca) + " · " + nf(s.qtd, 0) +
+                 (s.qtd > 1 ? " peças" : " peça") + (quando ? " · " + quando : "");
       var marca = s.id === activeId ? "● " : "";
+      var destaque = (s.preco > 0) ? brl(s.preco) : brl(s.porPeca);
 
       return '<div class="saved-item" data-id="' + esc(s.id) + '">' +
         (editando ? '<button type="button" class="del" data-del="' + esc(s.id) + '">Excluir</button>' : "") +
@@ -1441,7 +1717,7 @@
             '<span class="saved-name">' + marca + esc(s.nome) + '</span>' +
             '<span class="saved-meta">' + esc(meta) + '</span>' +
           '</span>' +
-          '<span class="saved-cost">' + brl(s.porPeca) + '</span>' +
+          '<span class="saved-cost">' + destaque + '</span>' +
         '</button>' +
         (s.link
           ? '<a class="saved-link" href="' + esc(s.link) + '" target="_blank" rel="noopener noreferrer" ' +
@@ -1477,6 +1753,35 @@
       setAtivo(it.id);
       calc();
       document.querySelector("main").scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+
+  /* Compartilhar: no iPhone abre a folha nativa (WhatsApp, Mensagens…);
+     onde não existe, cai para a área de transferência. */
+  document.getElementById("btnCompartilhar").addEventListener("click", function () {
+    var it = activeId ? acharSalvo(activeId) : null;
+    var qtd = ultimo.qtd;
+    var linhas = [
+      it ? it.nome : "Peça impressa em 3D",
+      "",
+      "Preço: " + brl(ultimo.preco) + " por peça",
+      qtd > 1 ? "Lote de " + qtd + " peças: " + brl(ultimo.preco * qtd) : null,
+      "Tempo de impressão: " + horasEmTexto(ultimo.tempo) + " o job",
+      "Material: PLA",
+      it && it.link ? "" : null,
+      it && it.link ? it.link : null
+    ].filter(function (l) { return l !== null; });
+
+    var texto = linhas.join("\n");
+
+    if (navigator.share) {
+      navigator.share({ text: texto }).catch(function () { /* cancelou */ });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(texto).then(function () {
+        alert("Orçamento copiado.");
+      }).catch(function () { alert(texto); });
+    } else {
+      alert(texto);
     }
   });
 
@@ -1519,7 +1824,7 @@
     var dados = {
       nome: nome, link: link, valores: valores,
       total: ultimo.total, porPeca: ultimo.porPeca,
-      qtd: ultimo.qtd, tempo: ultimo.tempo,
+      qtd: ultimo.qtd, tempo: ultimo.tempo, preco: ultimo.preco,
       data: agora, atualizado_em: agora, excluido: false
     };
 
@@ -1703,7 +2008,7 @@
     return {
       id: s.id, user_id: sessao.user_id, nome: s.nome, link: s.link || null,
       valores: s.valores, total: s.total, por_peca: s.porPeca, qtd: s.qtd,
-      tempo: s.tempo, data: s.data,
+      tempo: s.tempo, preco: (s.preco === undefined ? null : s.preco), data: s.data,
       atualizado_em: s.atualizado_em, excluido: !!s.excluido
     };
   }
@@ -1712,7 +2017,7 @@
     return {
       id: r.id, nome: r.nome, link: r.link || "", valores: r.valores,
       total: Number(r.total), porPeca: Number(r.por_peca), qtd: Number(r.qtd),
-      tempo: Number(r.tempo), data: r.data,
+      tempo: Number(r.tempo), preco: (r.preco == null ? 0 : Number(r.preco)), data: r.data,
       atualizado_em: r.atualizado_em, excluido: !!r.excluido
     };
   }
@@ -1877,11 +2182,31 @@
 
   setView(view);
 
+  /* Versão nova publicada: avisa em vez de exigir fechar o app à força. */
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", function () {
-      navigator.serviceWorker.register("/sw.js").catch(function () {});
+      navigator.serviceWorker.register("/sw.js").then(function (reg) {
+        reg.addEventListener("updatefound", function () {
+          var novo = reg.installing;
+          if (!novo) return;
+          novo.addEventListener("statechange", function () {
+            /* controller existente = já havia versão rodando, logo é update */
+            if (novo.state === "installed" && navigator.serviceWorker.controller) {
+              document.getElementById("aviso").hidden = false;
+            }
+          });
+        });
+
+        document.addEventListener("visibilitychange", function () {
+          if (!document.hidden) reg.update().catch(function () {});
+        });
+      }).catch(function () {});
     });
   }
+
+  document.getElementById("avisoBtn").addEventListener("click", function () {
+    location.reload();
+  });
 </script>
 </body>
 </html>
