@@ -336,6 +336,52 @@
   input.narrow { width: 3.4em; }
   input.wide { width: 6.4em; }
 
+  /* Linha que abre/fecha a calculadora auxiliar */
+  .disclosure {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    appearance: none;
+    border: none;
+    background: transparent;
+    font: inherit;
+    color: var(--accent);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .disclosure:active { background: var(--fill); }
+
+  .disclosure .chev {
+    flex: none;
+    font-size: 19px;
+    line-height: 1;
+    color: var(--label-3);
+    transform: rotate(90deg);
+    transition: transform 0.22s cubic-bezier(0.32,0.72,0,1);
+  }
+
+  .disclosure[aria-expanded="true"] .chev { transform: rotate(-90deg); }
+
+  .row.helper[hidden] { display: none; }
+
+  .calc-note {
+    padding: 11px 16px 13px;
+    font-size: 12.5px;
+    color: var(--label-2);
+    font-variant-numeric: tabular-nums;
+    position: relative;
+  }
+
+  .calc-note::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 16px; right: 0;
+    height: 0.5px;
+    background: var(--sep);
+  }
+
   /* Detalhe / rodapé de seção */
   .sec-note {
     padding: 0 16px;
@@ -516,25 +562,32 @@
   <div class="sec-head"><span>Depreciação</span><span class="sec-total" id="sub-deprec">R$ 0,00</span></div>
   <div class="group">
     <label class="row">
+      <span class="row-label">Custo por hora
+        <span class="row-hint">quanto a impressora consome de si mesma por hora</span></span>
+      <span class="row-val"><span class="pre">R$</span>
+        <input type="number" id="deprecHora" value="1.20" min="0" step="0.01" inputmode="decimal">
+        <span class="unit">/h</span></span>
+    </label>
+
+    <button type="button" class="row disclosure" id="deprecToggle" aria-expanded="false">
+      <span class="row-label">Calcular pelo valor da impressora</span>
+      <span class="chev">›</span>
+    </button>
+
+    <label class="row helper" hidden>
       <span class="row-label">Valor pago na A1</span>
       <span class="row-val"><span class="pre">R$</span>
         <input type="number" id="valorImpressora" value="6000" min="0" step="50" inputmode="decimal"></span>
     </label>
-    <label class="row">
-      <span class="row-label">Vida útil estimada
-        <span class="row-hint">horas até o fim de vida</span></span>
+    <label class="row helper" hidden>
+      <span class="row-label">Vida útil total
+        <span class="row-hint">horas de impressão até o fim de vida</span></span>
       <span class="row-val">
         <input type="number" id="vidaUtil" value="5000" min="1" step="100" inputmode="decimal">
         <span class="unit">h</span></span>
     </label>
-    <label class="row">
-      <span class="row-label">Horas já rodadas</span>
-      <span class="row-val">
-        <input type="number" id="horasRodadas" value="384" min="0" step="1" inputmode="decimal">
-        <span class="unit">h</span></span>
-    </label>
+    <div class="calc-note helper" id="deprecCalc" hidden></div>
   </div>
-  <div class="sec-note" id="deprecDerived"></div>
 
   <div class="sec-head"><span>Manutenção</span><span class="sec-total" id="sub-manut">R$ 0,00</span></div>
   <div class="group">
@@ -569,15 +622,16 @@
 <script>
   var DEFAULTS = {
     peso: "45", tempo: "3.5", qtd: "1", precoKg: "92.5",
-    tarifa: "0.92214", potencia: "130", valorImpressora: "6000",
-    vidaUtil: "5000", horasRodadas: "384", manutHora: "0.20"
+    tarifa: "0.92214", potencia: "130", deprecHora: "1.20",
+    valorImpressora: "6000", vidaUtil: "5000", manutHora: "0.20"
   };
 
   var ids = Object.keys(DEFAULTS);
   var el = {};
   ids.forEach(function (id) { el[id] = document.getElementById(id); });
 
-  var STORAGE_KEY = "calc3d.custoImpressao.v1";
+  var STORAGE_KEY = "calc3d.custoImpressao.v2";
+  var OLD_KEY = "calc3d.custoImpressao.v1";
   var VIEW_KEY = "calc3d.view.v1";
   var view = "peca";
 
@@ -598,6 +652,24 @@
   function carregar() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
+
+      /* Sem dados novos? Aproveita os da versão anterior, convertendo o
+         custo por hora a partir de valor, vida útil e horas já rodadas. */
+      if (!raw) {
+        var old = localStorage.getItem(OLD_KEY);
+        if (old) {
+          var o = JSON.parse(old);
+          var valor = parseFloat(o.valorImpressora);
+          var vida = parseFloat(o.vidaUtil);
+          var rodadas = parseFloat(o.horasRodadas) || 0;
+          if (isFinite(valor) && isFinite(vida)) {
+            var rest = Math.max(vida - rodadas, 1);
+            o.deprecHora = (valor / rest).toFixed(2);
+          }
+          raw = JSON.stringify(o);
+        }
+      }
+
       if (raw) {
         var data = JSON.parse(raw);
         ids.forEach(function (id) {
@@ -622,9 +694,7 @@
     var material = (num("peso", 0) / 1000) * num("precoKg", 0);
     var energia  = (num("potencia", 0) / 1000) * tempo * num("tarifa", 0);
 
-    var vidaRestante = Math.max(num("vidaUtil", 1) - num("horasRodadas", 0), 1);
-    var custoHora = num("valorImpressora", 0) / vidaRestante;
-    var deprec = custoHora * tempo;
+    var deprec = num("deprecHora", 0) * tempo;
 
     var manut = num("manutHora", 0) * tempo;
 
@@ -635,9 +705,6 @@
     document.getElementById("sub-energia").textContent  = brl(energia);
     document.getElementById("sub-deprec").textContent   = brl(deprec);
     document.getElementById("sub-manut").textContent    = brl(manut);
-
-    document.getElementById("deprecDerived").textContent =
-      "Restam " + nf(vidaRestante, 0) + " h de vida útil · R$ " + nf(custoHora, 4) + " por hora";
 
     /* Resultado principal */
     document.getElementById("heroValue").textContent = nf(total / div, 2);
@@ -705,6 +772,50 @@
       setTimeout(function () { try { input.select(); } catch (e) {} }, 1);
     });
   });
+
+  /* --- Calculadora auxiliar da depreciação --- */
+
+  var helpers = document.querySelectorAll(".helper");
+  var toggle = document.getElementById("deprecToggle");
+
+  /* Abrir apenas mostra a conta — nunca sobrescreve um valor
+     que você tenha digitado à mão. */
+  function setHelper(open) {
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    for (var i = 0; i < helpers.length; i++) helpers[i].hidden = !open;
+    if (open) notaDeprec();
+  }
+
+  function porHoraCalculado() {
+    return num("valorImpressora", 0) / Math.max(num("vidaUtil", 1), 1);
+  }
+
+  function notaDeprec() {
+    var porHora = porHoraCalculado();
+    var txt = brl(num("valorImpressora", 0)) + " ÷ " + nf(Math.max(num("vidaUtil", 1), 1), 0) +
+              " h = R$ " + nf(porHora, 2) + " por hora";
+
+    /* Avisa quando o valor em uso não é o desta conta */
+    if (Math.abs(porHora - num("deprecHora", 0)) >= 0.005) {
+      txt += " · edite um campo acima para aplicar";
+    }
+    document.getElementById("deprecCalc").textContent = txt;
+  }
+
+  /* Valor pago ÷ vida útil total = custo por hora. Fixo: não sobe
+     conforme a impressora envelhece, então não precisa de manutenção. */
+  function recalcDeprec() {
+    el.deprecHora.value = porHoraCalculado().toFixed(2);
+    notaDeprec();
+    calc();
+  }
+
+  toggle.addEventListener("click", function () {
+    setHelper(toggle.getAttribute("aria-expanded") !== "true");
+  });
+
+  el.valorImpressora.addEventListener("input", recalcDeprec);
+  el.vidaUtil.addEventListener("input", recalcDeprec);
 
   document.getElementById("segPeca").addEventListener("click", function () { setView("peca"); });
   document.getElementById("segJob").addEventListener("click", function () { setView("job"); });
