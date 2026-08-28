@@ -336,6 +336,66 @@
   input.narrow { width: 3.4em; }
   input.wide { width: 6.4em; }
 
+  /* ---------- Quadros principais ---------- */
+
+  .boxes {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .box {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 13px 6px 11px;
+    text-align: center;
+    cursor: text;
+    display: block;
+    border: 1.5px solid transparent;
+    transition: border-color 0.15s ease;
+  }
+
+  .box:focus-within { border-color: var(--accent); }
+
+  .box-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--label-2);
+  }
+
+  .box input[type="number"] {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--label);
+    padding: 3px 0 1px;
+    margin: 0;
+  }
+
+  .box input[type="number"]:focus { background: transparent; }
+
+  .box-unit {
+    display: block;
+    font-size: 12px;
+    color: var(--label-2);
+    font-weight: 500;
+  }
+
+  .boxes-hint {
+    padding: 0 4px;
+    margin: 0 0 22px;
+    font-size: 12.5px;
+    color: var(--label-2);
+    line-height: 1.4;
+  }
+
   /* Linha que abre/fecha a calculadora auxiliar */
   .disclosure {
     display: flex;
@@ -845,30 +905,35 @@
 <main>
 <div class="inner">
 
-  <div class="sec-head"><span>A peça</span></div>
-  <div class="group">
-    <label class="row">
-      <span class="row-label">Peso do job
-        <span class="row-hint">gramas no fatiador, com purga e suporte</span></span>
-      <span class="row-val">
-        <input type="number" id="peso" value="45" min="0" step="1" inputmode="decimal">
-        <span class="unit">g</span></span>
+  <div class="sec-head"><span>O que você vai imprimir</span></div>
+  <div class="boxes">
+    <label class="box">
+      <span class="box-label">Peso</span>
+      <input type="number" id="peso" value="45" min="0" step="1" inputmode="decimal">
+      <span class="box-unit">gramas</span>
     </label>
-    <label class="row">
-      <span class="row-label">Tempo do job
-        <span class="row-hint">o job inteiro, não por peça</span></span>
-      <span class="row-val">
-        <input type="number" id="tempo" value="3.5" min="0" step="0.1" inputmode="decimal">
-        <span class="unit">h</span></span>
+    <label class="box">
+      <span class="box-label">Tempo</span>
+      <input type="number" id="tempo" value="3.5" min="0" step="0.1" inputmode="decimal">
+      <span class="box-unit">horas</span>
     </label>
-    <label class="row">
-      <span class="row-label">Peças por job
-        <span class="row-hint">mais peças juntas, mais barata cada uma</span></span>
-      <span class="row-val">
-        <input type="number" id="qtd" class="narrow" value="1" min="1" step="1" inputmode="numeric">
-        <span class="unit">un</span></span>
+    <label class="box">
+      <span class="box-label">Peças</span>
+      <input type="number" id="qtd" value="1" min="1" step="1" inputmode="numeric">
+      <span class="box-unit">no job</span>
     </label>
   </div>
+  <p class="boxes-hint">Os três valores são do <b>job inteiro</b>, como aparecem no fatiador — peso já com purga e suporte.</p>
+
+  <div class="group" id="grupoAjustes">
+    <button type="button" class="row disclosure" id="ajustesToggle" aria-expanded="false">
+      <span class="row-label">Ajustes de custo
+        <span class="row-hint" id="ajustesResumo">Filamento, energia, máquina</span></span>
+      <span class="chev">›</span>
+    </button>
+  </div>
+
+  <div id="ajustes" hidden>
 
   <div class="sec-head"><span>Material</span><span class="sec-total" id="sub-material">R$ 0,00</span></div>
   <div class="group">
@@ -939,6 +1004,8 @@
         <span class="unit">/h</span></span>
     </label>
   </div>
+
+  </div><!-- /#ajustes -->
 
   <div class="sec-head"><span>Detalhamento</span><span class="sec-total" id="detailCap">por peça</span></div>
   <div class="group" id="detail"></div>
@@ -1175,6 +1242,7 @@
 
     ultimo = { total: total, porPeca: total / qtd, qtd: qtd, tempo: tempo };
 
+    resumoAjustes();
     salvar();
   }
 
@@ -1239,6 +1307,37 @@
 
   el.valorImpressora.addEventListener("input", recalcDeprec);
   el.vidaUtil.addEventListener("input", recalcDeprec);
+
+  /* --- Ajustes de custo: recolhidos, porque no dia a dia só peso,
+         tempo e quantidade mudam. --- */
+
+  var AJUSTES_KEY = "calc3d.ajustes.v1";
+  var ajustesEl = document.getElementById("ajustes");
+  var ajustesToggle = document.getElementById("ajustesToggle");
+
+  function setAjustes(abrir, gravar) {
+    ajustesToggle.setAttribute("aria-expanded", abrir ? "true" : "false");
+    ajustesEl.hidden = !abrir;
+    if (gravar !== false) {
+      try { localStorage.setItem(AJUSTES_KEY, abrir ? "1" : "0"); } catch (e) { /* ignora */ }
+    }
+  }
+
+  /* Mostra os valores em uso mesmo com a seção fechada, para não
+     esconder que existe um preço de filamento por trás da conta. */
+  function resumoAjustes() {
+    document.getElementById("ajustesResumo").textContent =
+      "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
+      "/h máquina · " + nf(num("potencia", 0), 0) + " W";
+  }
+
+  ajustesToggle.addEventListener("click", function () {
+    setAjustes(ajustesToggle.getAttribute("aria-expanded") !== "true");
+  });
+
+  try {
+    setAjustes(localStorage.getItem(AJUSTES_KEY) === "1", false);
+  } catch (e) { setAjustes(false, false); }
 
   document.getElementById("segPeca").addEventListener("click", function () { setView("peca"); });
   document.getElementById("segJob").addEventListener("click", function () { setView("job"); });
