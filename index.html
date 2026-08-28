@@ -211,13 +211,25 @@
   input.narrow { width: 3.4em; }
   input.wide { width: 6.4em; }
 
-  .row.helper[hidden], .row.preco-cfg[hidden] { display: none; }
 
   /* ---------- Quadros ---------- */
 
   .boxes {
     display: grid; grid-template-columns: 1fr 1.5fr 1fr;
     gap: 9px; margin-bottom: 10px;
+  }
+
+  .boxes.b1 { grid-template-columns: 1fr; }
+  .boxes.b2 { grid-template-columns: 1fr 1fr; }
+  .boxes.b3 { grid-template-columns: 1fr 1fr 1fr; }
+  .boxes.fim { margin-bottom: 22px; }
+
+  /* valores longos, tipo 0,92214 */
+  .box.sm input[type="number"] { font-size: 20px; }
+
+  .box-nota {
+    display: block; font-size: 11.5px; color: var(--label-2);
+    margin-top: 3px; line-height: 1.3;
   }
 
   .box {
@@ -396,15 +408,6 @@
 
   .disclosure[aria-expanded="true"] .chev { transform: rotate(-90deg); }
 
-  .calc-note {
-    padding: 11px 16px 13px; font-size: 12.5px; color: var(--label-2);
-    font-variant-numeric: tabular-nums; position: relative;
-  }
-
-  .calc-note::before {
-    content: ""; position: absolute; top: 0; left: 16px; right: 0;
-    height: 0.5px; background: var(--sep);
-  }
 
   .explica {
     padding: 12px 16px 14px; font-size: 12.5px; color: var(--label-2);
@@ -651,134 +654,131 @@
 
   <div id="ajustes" hidden>
 
-  <div class="sec-head"><span>Material</span><span class="sec-total" id="sub-material"></span></div>
-  <div class="group">
-    <label class="row">
-      <span class="row-label">Filamento PLA
-        <span class="row-hint">preço do quilo</span></span>
-      <span class="row-val"><span class="pre">R$</span>
-        <input type="number" id="precoKg" value="92.5" min="0" step="0.5" inputmode="decimal">
-        <span class="unit">/kg</span></span>
+  <div class="sec-head"><span>Material e energia</span></div>
+  <div class="boxes b3">
+    <label class="box">
+      <span class="box-label">Filamento</span>
+      <input type="number" id="precoKg" value="92.5" min="0" step="0.5" inputmode="decimal">
+      <span class="box-unit">R$ / kg</span>
+    </label>
+    <label class="box sm">
+      <span class="box-label">Tarifa</span>
+      <input type="number" id="tarifa" value="0.92214" min="0" step="0.001" inputmode="decimal">
+      <span class="box-unit">R$ / kWh</span>
+    </label>
+    <label class="box">
+      <span class="box-label">Potência</span>
+      <input type="number" id="potencia" value="130" min="0" step="5" inputmode="decimal">
+      <span class="box-unit">watts</span>
+    </label>
+  </div>
+  <p class="boxes-hint">A potência é a média imprimindo, já contando o AMS se você usa.</p>
+
+  <div class="sec-head"><span>Máquina</span></div>
+  <div class="boxes b2">
+    <label class="box">
+      <span class="box-label">Depreciação</span>
+      <input type="number" id="deprecHora" value="1.20" min="0" step="0.01" inputmode="decimal">
+      <span class="box-unit">R$ / hora</span>
+    </label>
+    <label class="box">
+      <span class="box-label">Manutenção</span>
+      <input type="number" id="manutHora" value="0.20" min="0" step="0.01" inputmode="decimal">
+      <span class="box-unit">R$ / hora</span>
     </label>
   </div>
 
-  <div class="sec-head"><span>Energia</span></div>
   <div class="group">
-    <label class="row">
-      <span class="row-label">Tarifa
-        <span class="row-hint">da sua conta de luz</span></span>
-      <span class="row-val"><span class="pre">R$</span>
-        <input type="number" id="tarifa" class="wide" value="0.92214" min="0" step="0.001" inputmode="decimal">
-        <span class="unit">/kWh</span></span>
-    </label>
-    <label class="row">
-      <span class="row-label">Potência média
-        <span class="row-hint">imprimindo, com AMS se usar</span></span>
-      <span class="row-val">
-        <input type="number" id="potencia" class="narrow" value="130" min="0" step="5" inputmode="decimal">
-        <span class="unit">W</span></span>
-    </label>
-  </div>
-
-  <div class="sec-head"><span>Depreciação</span></div>
-  <div class="group">
-    <label class="row">
-      <span class="row-label">Custo por hora
-        <span class="row-hint">quanto a impressora consome de si mesma</span></span>
-      <span class="row-val"><span class="pre">R$</span>
-        <input type="number" id="deprecHora" value="1.20" min="0" step="0.01" inputmode="decimal">
-        <span class="unit">/h</span></span>
-    </label>
     <button type="button" class="row disclosure" id="deprecToggle" aria-expanded="false">
-      <span class="row-label">Calcular pelo valor da impressora</span>
+      <span class="row-label">Calcular a depreciação pelo valor da impressora</span>
       <span class="chev">›</span>
     </button>
-    <label class="row helper" hidden>
-      <span class="row-label">Valor pago na impressora</span>
-      <span class="row-val"><span class="pre">R$</span>
-        <input type="number" id="valorImpressora" value="6000" min="0" step="50" inputmode="decimal"></span>
-    </label>
-    <label class="row helper" hidden>
-      <span class="row-label">Vida útil total
-        <span class="row-hint">horas de impressão até o fim de vida</span></span>
-      <span class="row-val">
-        <input type="number" id="vidaUtil" value="5000" min="1" step="100" inputmode="decimal">
-        <span class="unit">h</span></span>
-    </label>
-    <div class="calc-note helper" id="deprecCalc" hidden></div>
   </div>
 
-  <div class="sec-head"><span>Manutenção</span></div>
-  <div class="group">
-    <label class="row">
-      <span class="row-label">Custo por hora de máquina
-        <span class="row-hint">bico, placa, correias, lubrificação</span></span>
-      <span class="row-val"><span class="pre">R$</span>
-        <input type="number" id="manutHora" value="0.20" min="0" step="0.01" inputmode="decimal">
-        <span class="unit">/h</span></span>
-    </label>
+  <div id="deprecCfg" hidden>
+    <div class="boxes b2">
+      <label class="box">
+        <span class="box-label">Valor pago</span>
+        <input type="number" id="valorImpressora" value="6000" min="0" step="50" inputmode="decimal">
+        <span class="box-unit">R$ na impressora</span>
+      </label>
+      <label class="box">
+        <span class="box-label">Vida útil</span>
+        <input type="number" id="vidaUtil" value="5000" min="1" step="100" inputmode="decimal">
+        <span class="box-unit">horas no total</span>
+      </label>
+    </div>
+    <p class="boxes-hint" id="deprecCalc"></p>
   </div>
 
   </div><!-- /#ajustes -->
 
   <!-- ============ AJUSTES DE PREÇO ============ -->
-  <div class="sec-head"><span>Como o preço é formado</span></div>
+  <div class="sec-head"><span>Seu trabalho</span></div>
+  <div class="boxes b2">
+    <label class="box">
+      <span class="box-label">Acabamento</span>
+      <input type="number" id="acabamento" value="10" min="0" step="1" inputmode="decimal">
+      <span class="box-unit">min / peça</span>
+    </label>
+    <label class="box">
+      <span class="box-label">Sua hora</span>
+      <input type="number" id="valorHora" value="30" min="0" step="1" inputmode="decimal">
+      <span class="box-unit">R$ / hora</span>
+    </label>
+  </div>
+  <p class="boxes-hint">Acabamento é o tempo por peça pra tirar suporte, lixar e montar.</p>
+
+  <div class="sec-head"><span>Quanto você quer ganhar</span></div>
+  <div class="boxes b3">
+    <label class="box">
+      <span class="box-label">Falhas</span>
+      <input type="number" id="falhas" value="10" min="0" max="90" step="1" inputmode="decimal">
+      <span class="box-unit">% de reserva</span>
+    </label>
+    <label class="box">
+      <span class="box-label">Margem</span>
+      <input type="number" id="margem" value="40" min="0" max="95" step="1" inputmode="decimal">
+      <span class="box-unit">% de lucro</span>
+    </label>
+    <label class="box">
+      <span class="box-label">Ou então</span>
+      <input type="number" id="multiplicador" value="2.8" min="1" step="0.1" inputmode="decimal">
+      <span class="box-unit">× o custo</span>
+    </label>
+  </div>
+
+  <div class="presets" id="presetsMargem">
+    <button type="button" class="preset" data-m="30">30%</button>
+    <button type="button" class="preset" data-m="40">40%</button>
+    <button type="button" class="preset" data-m="50">50%</button>
+    <button type="button" class="preset" data-m="60">60%</button>
+  </div>
+
   <div class="group">
-    <button type="button" class="row disclosure" id="precoToggle" aria-expanded="false">
-      <span class="row-label">Ajustes de preço
-        <span class="row-hint" id="precoResumo"></span></span>
-      <span class="chev">›</span>
-    </button>
-
-    <label class="row preco-cfg" hidden>
-      <span class="row-label">Acabamento
-        <span class="row-hint">minutos por peça: tirar suporte, lixar, montar</span></span>
-      <span class="row-val">
-        <input type="number" id="acabamento" class="narrow" value="10" min="0" step="1" inputmode="decimal">
-        <span class="unit">min</span></span>
-    </label>
-
-    <label class="row preco-cfg" hidden>
-      <span class="row-label">Valor da sua hora
-        <span class="row-hint">quanto vale seu tempo de trabalho</span></span>
-      <span class="row-val"><span class="pre">R$</span>
-        <input type="number" id="valorHora" value="30" min="0" step="1" inputmode="decimal">
-        <span class="unit">/h</span></span>
-    </label>
-
-    <label class="row preco-cfg" hidden>
-      <span class="row-label">Reserva para falhas
-        <span class="row-hint">peças que não prestam e você refaz</span></span>
-      <span class="row-val">
-        <input type="number" id="falhas" class="narrow" value="10" min="0" max="90" step="1" inputmode="decimal">
-        <span class="unit">%</span></span>
-    </label>
-
-    <label class="row preco-cfg" hidden>
-      <span class="row-label">Sua margem de lucro
-        <span class="row-hint">quanto sobra pra você, sobre o preço</span></span>
-      <span class="row-val">
-        <input type="number" id="margem" class="narrow" value="40" min="0" max="95" step="1" inputmode="decimal">
-        <span class="unit">%</span></span>
-    </label>
-
-    <label class="row preco-cfg" hidden>
-      <span class="row-label">Taxa da plataforma
-        <span class="row-hint">Shopee, Mercado Livre, maquininha — 0 se vender direto</span></span>
-      <span class="row-val">
-        <input type="number" id="taxaVenda" class="narrow" value="0" min="0" max="90" step="1" inputmode="decimal">
-        <span class="unit">%</span></span>
-    </label>
-
-    <div class="explica preco-cfg" hidden>
+    <div class="explica">
+      <b>Margem</b> e <b>multiplicador</b> são a mesma coisa dita de dois jeitos —
+      mexa no que fizer mais sentido pra você, o outro acompanha.<br><br>
+      A margem é sobre o <b>preço</b>: com 40%, de cada R$ 100 que entram, R$ 40
+      sobram pra você depois de pagar tudo. O multiplicador é sobre o
+      <b>custo de fabricar</b>: 2,8× quer dizer que a peça sai por R$ 10 e é
+      vendida por R$ 28.<br><br>
       <b>Reserva para falhas:</b> se 1 em cada 10 impressões dá errado, você
-      gastou material e máquina numa peça que não vende — quem paga isso são
-      as que deram certo. 10% cobre esse caso.<br><br>
-      <b>Margem de lucro:</b> é sobre o preço, não sobre o custo. Com 40%, de
-      cada R$ 100 que entram, R$ 40 sobram pra você depois de pagar tudo.
-      Não existe número certo: 30% a 50% é onde costuma ficar quem vende peça
-      impressa, mas quem decide é você.
+      gastou material e máquina numa peça que não vende — quem paga essa conta
+      são as que deram certo.<br><br>
+      Não existe número certo pra margem: 30% a 50% é onde costuma ficar quem
+      vende peça impressa, mas quem decide é você.
     </div>
+  </div>
+
+  <div class="sec-head"><span>Onde você vende</span></div>
+  <div class="boxes b1 fim">
+    <label class="box">
+      <span class="box-label">Taxa da plataforma</span>
+      <input type="number" id="taxaVenda" value="0" min="0" max="90" step="1" inputmode="decimal">
+      <span class="box-unit">% — deixe 0 se vende direto</span>
+      <span class="box-nota">Shopee, Mercado Livre, maquininha</span>
+    </label>
   </div>
 
   <!-- ============ SALVOS ============ -->
@@ -1026,12 +1026,13 @@
 
     document.getElementById("tempoTexto").textContent = tempoTexto(horas);
 
-    resumos();
-
     ultimo = {
       total: fabJob, porPeca: fab, custoReal: custoReal, qtd: qtd, tempo: horas,
       preco: precoFinal, lucro: lucro, margem: margem * 100
     };
+
+    mostraMultiplicador(fab, precoSemTaxa);
+    resumos();
 
     salvarCampos();
   }
@@ -1108,13 +1109,12 @@
   function resumos() {
     document.getElementById("custoResumo").textContent =
       "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
-      "/h máquina · " + nf(num("potencia", 0), 0) + " W";
+      "/h máquina · " + nf(num("potencia", 0), 0) + " W · toque para ajustar";
 
-    document.getElementById("precoResumo").textContent =
-      nf(num("acabamento", 0), 0) + " min de acabamento · " +
-      nf(num("falhas", 0), 0) + "% falhas · " +
-      nf(num("margem", 0), 0) + "% de margem" +
-      (num("taxaVenda", 0) > 0 ? " · " + nf(num("taxaVenda", 0), 0) + "% de taxa" : "");
+    var m = num("margem", 0);
+    [].forEach.call(document.querySelectorAll("#presetsMargem .preset"), function (b) {
+      b.setAttribute("aria-pressed", parseFloat(b.getAttribute("data-m")) === m);
+    });
   }
 
   ids.forEach(function (id) {
@@ -1248,8 +1248,8 @@
   }
 
   var ajustesEl = document.getElementById("ajustes");
+  var deprecCfg = document.getElementById("deprecCfg");
   recolhivel("custoToggle", function (abrir) { ajustesEl.hidden = !abrir; }, "calc3d.ajustes.v1");
-  recolhivel("precoToggle", document.querySelectorAll(".preco-cfg"), "calc3d.preco.v1");
 
   /* ---- Calculadora de depreciação ---- */
 
@@ -1265,7 +1265,7 @@
     document.getElementById("deprecCalc").textContent = txt;
   }
 
-  recolhivel("deprecToggle", document.querySelectorAll(".helper"), null, notaDeprec);
+  recolhivel("deprecToggle", function (abrir) { deprecCfg.hidden = !abrir; }, null, notaDeprec);
 
   function recalcDeprec() {
     el.deprecHora.value = porHoraCalculado().toFixed(2);
@@ -1275,6 +1275,40 @@
 
   el.valorImpressora.addEventListener("input", recalcDeprec);
   el.vidaUtil.addEventListener("input", recalcDeprec);
+
+  /* ---- Margem e multiplicador: a mesma coisa por dois caminhos ----
+     A margem é sobre o preço; o multiplicador, sobre o custo de fabricar.
+     Só a margem é gravada — o multiplicador é sempre derivado, para não
+     existirem duas fontes da verdade brigando. */
+
+  var multEl = document.getElementById("multiplicador");
+  var editandoMult = false;
+
+  function mostraMultiplicador(fab, precoSemTaxa) {
+    if (editandoMult) return;
+    multEl.value = (fab > 0 ? precoSemTaxa / fab : 0).toFixed(1);
+  }
+
+  multEl.addEventListener("input", function () {
+    var mult = parseFloat(multEl.value);
+    if (!isFinite(mult) || mult <= 0) return;
+
+    /* preço-alvo = custo de fabricar × multiplicador; daí volta-se à margem */
+    var alvo = ultimo.porPeca * mult;
+    var nova = alvo > 0 ? (1 - ultimo.custoReal / alvo) * 100 : 0;
+
+    editandoMult = true;
+    el.margem.value = String(Math.round(Math.min(Math.max(nova, 0), 95)));
+    calc();
+    editandoMult = false;
+  });
+
+  document.getElementById("presetsMargem").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-m]");
+    if (!b) return;
+    el.margem.value = b.getAttribute("data-m");
+    calc();
+  });
 
   /* ================= Cálculos salvos ================= */
 
