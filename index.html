@@ -494,7 +494,10 @@
 
   .disclosure[aria-expanded="true"] .chev { transform: rotate(-90deg); }
 
-  .row.helper[hidden] { display: none; }
+  /* `hidden` sozinho não basta: .row define display:flex e vence o
+     atributo. Sem isto a seção parece fechada e continua aberta. */
+  .row.helper[hidden],
+  .row.venda-cfg[hidden] { display: none; }
 
   .calc-note {
     padding: 11px 16px 13px;
@@ -1193,7 +1196,7 @@
   <div class="group">
     <div class="note">
       <span>⚠️</span>
-      <div>Não inclui pós-processamento, embalagem nem <b>margem de lucro</b> — só o custo de fabricar.</div>
+      <div>Não inclui <b>embalagem, frete</b> nem peças perdidas por falha de impressão — esse risco sai do seu lucro, e é por isso que o multiplicador recomendado não é menor que 2×.</div>
     </div>
   </div>
 
@@ -1618,6 +1621,7 @@
   document.getElementById("segJob").addEventListener("click", function () { setView("job"); });
 
   document.getElementById("reset").addEventListener("click", function () {
+    if (!confirm("Restaurar todos os valores padrão?\n\nIsso desfaz o preço do filamento, a depreciação, o multiplicador e o resto dos ajustes. Os cálculos salvos não são afetados.")) return;
     ids.forEach(function (id) { el[id].value = DEFAULTS[id]; });
     setAtivo(null);
     calc();
