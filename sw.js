@@ -1,8 +1,9 @@
-const CACHE_NAME = "calc3d-v4";
+const CACHE_NAME = "calc3d-v6";
 const ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
+  "/config.js",
   "/icons/icon-192.png",
   "/icons/icon-512.png"
 ];
@@ -26,6 +27,11 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
+
+  /* Só cuidamos dos arquivos do próprio site. Chamadas a outros domínios
+     (API do Supabase) passam direto: servi-las do cache devolveria dados
+     velhos e a sincronização enxergaria uma lista desatualizada. */
+  if (new URL(req.url).origin !== self.location.origin) return;
 
   const isPage =
     req.mode === "navigate" ||

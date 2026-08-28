@@ -714,6 +714,91 @@
     line-height: 1.4;
   }
 
+  .sheet-hint.erro { color: var(--c-manut); font-weight: 500; }
+
+  .link-btn {
+    display: block;
+    width: 100%;
+    appearance: none;
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: 15px;
+    color: var(--accent);
+    padding: 15px 12px 6px;
+    min-height: 44px;
+    cursor: pointer;
+  }
+
+  .link-btn:active { opacity: 0.45; }
+
+  .sheet input[type="email"],
+  .sheet input[type="password"] {
+    flex: 1;
+    min-width: 0;
+    appearance: none;
+    border: none;
+    background: transparent;
+    font: inherit;
+    font-size: 16px;
+    color: var(--label);
+    text-align: right;
+    padding: 4px 0;
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  .sheet input[type="email"]:focus,
+  .sheet input[type="password"]:focus { outline: none; }
+
+  /* Conta */
+  .conta-row {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 50px;
+    padding: 10px 16px;
+    position: relative;
+    width: 100%;
+    appearance: none;
+    border: none;
+    background: transparent;
+    font: inherit;
+    text-align: left;
+    color: var(--label);
+  }
+
+  .conta-row + .conta-row::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 16px; right: 0;
+    height: 0.5px;
+    background: var(--sep);
+  }
+
+  button.conta-row { cursor: pointer; }
+  button.conta-row:active { background: var(--fill); }
+
+  .conta-row .body { flex: 1; min-width: 0; }
+
+  .conta-row .mail {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .conta-row .estado {
+    font-size: 12.5px;
+    color: var(--label-2);
+    margin-top: 2px;
+  }
+
+  .conta-row .estado.ruim { color: var(--c-manut); }
+
+  .conta-row .chev { color: var(--label-3); font-size: 19px; flex: none; }
+  .conta-row.sair { color: var(--c-manut); justify-content: center; }
+
   @media (max-width: 340px) {
     .hero-value { font-size: 38px; }
     .row-label { font-size: 15px; }
@@ -864,6 +949,12 @@
   </div>
   <div class="group" id="listaSalvos"></div>
 
+  <div class="sec-head">
+    <span>Conta</span>
+    <button type="button" class="sec-btn" id="btnSync" hidden>Sincronizar</button>
+  </div>
+  <div class="group" id="blocoConta"></div>
+
   <div class="group">
     <div class="note">
       <span>⚠️</span>
@@ -910,6 +1001,38 @@
   </div>
 </div>
 
+<!-- ============ FOLHA: ENTRAR ============ -->
+<div class="sheet-wrap" id="sheetAuth" hidden>
+  <div class="backdrop" id="authBackdrop"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+    <div class="grabber"></div>
+    <h2 id="authTitle">Entrar</h2>
+
+    <div class="group">
+      <label class="row">
+        <span class="row-label">E-mail</span>
+        <input type="email" id="aEmail" placeholder="voce@exemplo.com" autocomplete="username"
+               autocapitalize="off" spellcheck="false" enterkeyhint="next">
+      </label>
+      <label class="row">
+        <span class="row-label">Senha</span>
+        <input type="password" id="aSenha" placeholder="mínimo 8 caracteres"
+               autocomplete="current-password" enterkeyhint="go">
+      </label>
+    </div>
+
+    <p class="sheet-hint" id="authHint">Seus cálculos ficam disponíveis em qualquer aparelho.</p>
+
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-alt" id="authCancelar">Cancelar</button>
+      <button type="button" class="btn btn-main" id="authConfirmar">Entrar</button>
+    </div>
+
+    <button type="button" class="link-btn" id="authAlternar">Não tenho conta ainda</button>
+  </div>
+</div>
+
+<script src="/config.js"></script>
 <script>
   var DEFAULTS = {
     peso: "45", tempo: "3.5", qtd: "1", precoKg: "92.5",
@@ -1161,6 +1284,16 @@
       salvos = raw ? JSON.parse(raw) : [];
       if (!Array.isArray(salvos)) salvos = [];
     } catch (e) { salvos = []; }
+
+    /* Itens salvos antes da sincronização não têm estes campos */
+    salvos.forEach(function (s) {
+      if (!s.atualizado_em) s.atualizado_em = s.data || new Date(0).toISOString();
+      if (typeof s.excluido !== "boolean") s.excluido = false;
+    });
+  }
+
+  function visiveis() {
+    return salvos.filter(function (s) { return !s.excluido; });
   }
 
   function gravarSalvos() {
@@ -1185,8 +1318,9 @@
   }
 
   function renderSalvos() {
-    btnEditar.hidden = salvos.length === 0;
-    if (!salvos.length) {
+    var lista = visiveis();
+    btnEditar.hidden = lista.length === 0;
+    if (!lista.length) {
       editando = false;
       btnEditar.textContent = "Editar";
       listaEl.innerHTML =
@@ -1194,7 +1328,7 @@
       return;
     }
 
-    listaEl.innerHTML = salvos.map(function (s) {
+    listaEl.innerHTML = lista.map(function (s) {
       var data = new Date(s.data);
       var quando = isNaN(data) ? "" : data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
       var meta = nf(s.qtd, 0) + (s.qtd > 1 ? " peças" : " peça") + " · " + nf(s.tempo, 1) + " h" +
@@ -1223,9 +1357,13 @@
     if (del) {
       var alvo = acharSalvo(del.getAttribute("data-del"));
       if (alvo && confirm('Excluir "' + alvo.nome + '"?')) {
-        salvos = salvos.filter(function (s) { return s.id !== alvo.id; });
+        /* Marca em vez de apagar: sem isso o item voltaria do outro
+           aparelho na próxima sincronização. */
+        alvo.excluido = true;
+        alvo.atualizado_em = new Date().toISOString();
         gravarSalvos();
         if (activeId === alvo.id) setAtivo(null); else renderSalvos();
+        sincronizar();
       }
       return;
     }
@@ -1278,17 +1416,19 @@
     var valores = {};
     ids.forEach(function (id) { valores[id] = el[id].value; });
 
+    var agora = new Date().toISOString();
     var dados = {
       nome: nome, link: link, valores: valores,
       total: ultimo.total, porPeca: ultimo.porPeca,
       qtd: ultimo.qtd, tempo: ultimo.tempo,
-      data: new Date().toISOString()
+      data: agora, atualizado_em: agora, excluido: false
     };
 
     var atual = activeId ? acharSalvo(activeId) : null;
 
     if (atual && atual.nome === nome) {
       dados.id = atual.id;
+      dados.data = atual.data;           /* preserva a data de criação */
       salvos[salvos.indexOf(atual)] = dados;
     } else {
       dados.id = String(Date.now()) + Math.random().toString(36).slice(2, 7);
@@ -1298,6 +1438,7 @@
     gravarSalvos();
     setAtivo(dados.id);
     fecharSheet();
+    sincronizar();
   }
 
   document.getElementById("btnSalvar").addEventListener("click", abrirSheet);
@@ -1323,9 +1464,317 @@
     if (atualId && acharSalvo(atualId)) setAtivo(atualId);
   }
 
+  /* ================= Conta e sincronização ================= */
+
+  /* Vem de config.js. Ausente ou vazio = app funciona normalmente, só sem
+     sincronizar. A chave anon é pública por desenho: quem protege os dados
+     é o Row Level Security no banco. */
+  var CFG = window.CALC3D_CONFIG || {};
+  var SUPA_URL = String(CFG.url || "").replace(/\/+$/, "");
+  var SUPA_KEY = String(CFG.key || "");
+
+  var SESSAO_KEY = "calc3d.sessao.v1";
+  var sessao = null;
+  var sincronizando = false;
+  var ultimoSync = null;
+  var erroSync = "";
+  var modoCriar = false;
+
+  var blocoConta = document.getElementById("blocoConta");
+  var btnSync = document.getElementById("btnSync");
+  var sheetAuth = document.getElementById("sheetAuth");
+  var aEmail = document.getElementById("aEmail");
+  var aSenha = document.getElementById("aSenha");
+  var authHint = document.getElementById("authHint");
+
+  function configurado() { return !!(SUPA_URL && SUPA_KEY); }
+
+  function lerSessao() {
+    try {
+      var raw = localStorage.getItem(SESSAO_KEY);
+      sessao = raw ? JSON.parse(raw) : null;
+    } catch (e) { sessao = null; }
+  }
+
+  function gravarSessao(s) {
+    sessao = s;
+    try {
+      if (s) localStorage.setItem(SESSAO_KEY, JSON.stringify(s));
+      else localStorage.removeItem(SESSAO_KEY);
+    } catch (e) { /* ignora */ }
+  }
+
+  function api(caminho, opcoes) {
+    opcoes = opcoes || {};
+    var h = opcoes.headers || {};
+    h["apikey"] = SUPA_KEY;
+    h["Content-Type"] = "application/json";
+    opcoes.headers = h;
+    return fetch(SUPA_URL + caminho, opcoes).then(function (res) {
+      return res.text().then(function (txt) {
+        var corpo = null;
+        try { corpo = txt ? JSON.parse(txt) : null; } catch (e) { corpo = txt; }
+        if (!res.ok) {
+          var msg = (corpo && (corpo.msg || corpo.message || corpo.error_description ||
+                    corpo.error || corpo.hint)) || ("Erro " + res.status);
+          var err = new Error(msg);
+          err.status = res.status;
+          throw err;
+        }
+        return corpo;
+      });
+    });
+  }
+
+  function guardarToken(d) {
+    gravarSessao({
+      access_token: d.access_token,
+      refresh_token: d.refresh_token,
+      expira_em: Date.now() + ((d.expires_in || 3600) * 1000) - 60000,
+      email: (d.user && d.user.email) || aEmail.value.trim(),
+      user_id: d.user && d.user.id
+    });
+  }
+
+  /* Renova o token quando vence. Sessão inválida derruba o login em vez
+     de ficar tentando para sempre. */
+  function tokenValido() {
+    if (!sessao) return Promise.reject(new Error("Sem sessão"));
+    if (Date.now() < sessao.expira_em) return Promise.resolve(sessao.access_token);
+
+    return api("/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      body: JSON.stringify({ refresh_token: sessao.refresh_token })
+    }).then(function (d) {
+      guardarToken(d);
+      return sessao.access_token;
+    }).catch(function (e) {
+      if (e.status === 400 || e.status === 401) { gravarSessao(null); renderConta(); }
+      throw e;
+    });
+  }
+
+  function autenticar(criar) {
+    var email = aEmail.value.trim();
+    var senha = aSenha.value;
+
+    if (!email || email.indexOf("@") < 0) { erroAuth("Digite um e-mail válido."); return; }
+    if (senha.length < 8) { erroAuth("A senha precisa de pelo menos 8 caracteres."); return; }
+
+    erroAuth("");
+    document.getElementById("authConfirmar").disabled = true;
+
+    var caminho = criar ? "/auth/v1/signup" : "/auth/v1/token?grant_type=password";
+
+    api(caminho, { method: "POST", body: JSON.stringify({ email: email, password: senha }) })
+      .then(function (d) {
+        if (!d.access_token) {
+          /* Acontece quando a confirmação por e-mail está ligada */
+          erroAuth("Conta criada. Confirme pelo link enviado ao seu e-mail e entre em seguida.");
+          modoCriar = false;
+          renderAuth();
+          return;
+        }
+        guardarToken(d);
+        aSenha.value = "";
+        sheetAuth.hidden = true;
+        renderConta();
+        sincronizar();
+      })
+      .catch(function (e) {
+        var m = String(e.message || "");
+        if (/invalid login credentials/i.test(m)) m = "E-mail ou senha incorretos.";
+        else if (/already registered|already been registered/i.test(m)) m = "Esse e-mail já tem conta. Use “Entrar”.";
+        else if (/failed to fetch|networkerror/i.test(m)) m = "Sem conexão com o servidor.";
+        erroAuth(m);
+      })
+      .then(function () { document.getElementById("authConfirmar").disabled = false; });
+  }
+
+  function erroAuth(msg) {
+    authHint.textContent = msg || (modoCriar
+      ? "Escolha uma senha de pelo menos 8 caracteres."
+      : "Seus cálculos ficam disponíveis em qualquer aparelho.");
+    authHint.className = msg ? "sheet-hint erro" : "sheet-hint";
+  }
+
+  /* ---- Conversão entre o formato local e o do banco ---- */
+
+  function paraRemoto(s) {
+    return {
+      id: s.id, user_id: sessao.user_id, nome: s.nome, link: s.link || null,
+      valores: s.valores, total: s.total, por_peca: s.porPeca, qtd: s.qtd,
+      tempo: s.tempo, data: s.data,
+      atualizado_em: s.atualizado_em, excluido: !!s.excluido
+    };
+  }
+
+  function doRemoto(r) {
+    return {
+      id: r.id, nome: r.nome, link: r.link || "", valores: r.valores,
+      total: Number(r.total), porPeca: Number(r.por_peca), qtd: Number(r.qtd),
+      tempo: Number(r.tempo), data: r.data,
+      atualizado_em: r.atualizado_em, excluido: !!r.excluido
+    };
+  }
+
+  /* Vence quem foi alterado por último. Exclusões viajam como marcas
+     (excluido: true) — some a linha e o item voltaria do outro aparelho. */
+  function mesclar(locais, remotos) {
+    var mapa = {};
+    locais.forEach(function (s) { mapa[s.id] = s; });
+
+    remotos.forEach(function (r) {
+      var atual = mapa[r.id];
+      if (!atual || String(r.atualizado_em) > String(atual.atualizado_em)) mapa[r.id] = r;
+    });
+
+    return Object.keys(mapa).map(function (k) { return mapa[k]; })
+      .sort(function (a, b) { return String(b.data).localeCompare(String(a.data)); });
+  }
+
+  function sincronizar() {
+    if (!configurado() || !sessao || sincronizando) return Promise.resolve();
+    sincronizando = true;
+    erroSync = "";
+    renderConta();
+
+    return tokenValido().then(function (tk) {
+      var auth = { "Authorization": "Bearer " + tk };
+
+      return api("/rest/v1/calculos?select=*", { headers: auth }).then(function (remotos) {
+        var mesclado = mesclar(salvos, (remotos || []).map(doRemoto));
+        salvos = mesclado;
+        gravarSalvos();
+
+        var payload = mesclado.map(paraRemoto);
+        if (!payload.length) return null;
+
+        return api("/rest/v1/calculos", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + tk,
+            "Prefer": "resolution=merge-duplicates,return=minimal"
+          },
+          body: JSON.stringify(payload)
+        });
+      });
+    }).then(function () {
+      ultimoSync = Date.now();
+      renderSalvos();
+    }).catch(function (e) {
+      var m = String(e.message || "");
+      erroSync = /failed to fetch|networkerror/i.test(m) ? "Sem internet — sincroniza depois" : m;
+    }).then(function () {
+      sincronizando = false;
+      renderConta();
+    });
+  }
+
+  function quando(ts) {
+    if (!ts) return "";
+    var s = Math.round((Date.now() - ts) / 1000);
+    if (s < 60) return "agora";
+    if (s < 3600) return "há " + Math.round(s / 60) + " min";
+    return "há " + Math.round(s / 3600) + " h";
+  }
+
+  function renderConta() {
+    if (!configurado()) {
+      btnSync.hidden = true;
+      blocoConta.innerHTML =
+        '<div class="conta-row"><span class="body">' +
+        '<span class="mail">Sincronização não configurada</span>' +
+        '<span class="estado">Os cálculos ficam só neste aparelho.</span>' +
+        '</span></div>';
+      return;
+    }
+
+    if (!sessao) {
+      btnSync.hidden = true;
+      blocoConta.innerHTML =
+        '<button type="button" class="conta-row" id="irEntrar"><span class="body">' +
+        '<span class="mail">Entrar para sincronizar</span>' +
+        '<span class="estado">Use os mesmos cálculos em outros aparelhos.</span>' +
+        '</span><span class="chev">›</span></button>';
+      document.getElementById("irEntrar").addEventListener("click", abrirAuth);
+      return;
+    }
+
+    btnSync.hidden = false;
+    btnSync.textContent = sincronizando ? "Sincronizando…" : "Sincronizar";
+    btnSync.disabled = sincronizando;
+
+    var estado = sincronizando ? "Sincronizando…"
+      : erroSync ? erroSync
+      : ultimoSync ? "Sincronizado " + quando(ultimoSync)
+      : "Ainda não sincronizado";
+
+    blocoConta.innerHTML =
+      '<div class="conta-row"><span class="body">' +
+        '<span class="mail">' + esc(sessao.email || "conta") + '</span>' +
+        '<span class="estado' + (erroSync ? " ruim" : "") + '">' + esc(estado) + '</span>' +
+      '</span></div>' +
+      '<button type="button" class="conta-row sair" id="btnSair">Sair</button>';
+
+    document.getElementById("btnSair").addEventListener("click", function () {
+      if (!confirm("Sair da conta? Os cálculos continuam neste aparelho.")) return;
+      gravarSessao(null);
+      ultimoSync = null;
+      erroSync = "";
+      renderConta();
+    });
+  }
+
+  function renderAuth() {
+    document.getElementById("authTitle").textContent = modoCriar ? "Criar conta" : "Entrar";
+    document.getElementById("authConfirmar").textContent = modoCriar ? "Criar conta" : "Entrar";
+    document.getElementById("authAlternar").textContent =
+      modoCriar ? "Já tenho conta" : "Não tenho conta ainda";
+    aSenha.setAttribute("autocomplete", modoCriar ? "new-password" : "current-password");
+    erroAuth("");
+  }
+
+  function abrirAuth() {
+    modoCriar = false;
+    aSenha.value = "";
+    renderAuth();
+    sheetAuth.hidden = false;
+    setTimeout(function () { if (!aEmail.value) aEmail.focus(); else aSenha.focus(); }, 60);
+  }
+
+  document.getElementById("authCancelar").addEventListener("click", function () { sheetAuth.hidden = true; });
+  document.getElementById("authBackdrop").addEventListener("click", function () { sheetAuth.hidden = true; });
+  document.getElementById("authConfirmar").addEventListener("click", function () { autenticar(modoCriar); });
+  document.getElementById("authAlternar").addEventListener("click", function () {
+    modoCriar = !modoCriar;
+    renderAuth();
+  });
+
+  [aEmail, aSenha].forEach(function (f) {
+    f.addEventListener("keydown", function (ev) {
+      if (ev.key === "Enter") { ev.preventDefault(); autenticar(modoCriar); }
+    });
+  });
+
+  btnSync.addEventListener("click", function () { sincronizar(); });
+
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && !sheetAuth.hidden) sheetAuth.hidden = true;
+  });
+
+  /* Voltou a internet ou o app voltou ao primeiro plano: tenta de novo */
+  window.addEventListener("online", function () { sincronizar(); });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) sincronizar();
+  });
+
   lerSalvos();
+  lerSessao();
   renderSalvos();
   restaurarAtivo();
+  renderConta();
+  if (sessao) sincronizar();
 
   setView(view);
 
