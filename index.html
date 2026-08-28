@@ -245,14 +245,69 @@
   .box input[type="number"]:focus { background: transparent; }
   .box-unit { display: block; font-size: 12px; color: var(--label-2); font-weight: 500; }
 
-  /* Quadro do tempo: horas e minutos lado a lado */
-  .box-tempo .dupla { display: flex; align-items: baseline; justify-content: center; }
-  .box-tempo .dupla input { width: 1.75em; padding: 3px 0 1px; }
-  .box-tempo .dupla .u {
-    font-size: 12.5px; font-weight: 600; color: var(--label-2);
-    margin: 0 4px 0 1px;
+  /* Quadro do tempo: abre a roleta */
+  button.box-tempo {
+    appearance: none; font: inherit; color: var(--label);
+    cursor: pointer; display: block; width: 100%;
   }
-  .box-tempo .dupla .u:last-child { margin-right: 0; }
+
+  button.box-tempo:active { background: var(--fill); }
+
+  .box-valor {
+    display: block; font-size: 27px; font-weight: 600;
+    letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
+    color: var(--accent); padding: 3px 0 1px;
+  }
+
+  /* ---------- Roleta ---------- */
+
+  .wheels {
+    position: relative; display: flex;
+    height: 200px; margin: 4px 0 2px;
+    overflow: hidden;
+  }
+
+  .wheel-band {
+    position: absolute; left: 6px; right: 6px; top: 80px; height: 40px;
+    background: var(--fill); border-radius: 10px; pointer-events: none;
+  }
+
+  .wheel {
+    flex: 1; height: 100%; overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; -ms-overflow-style: none;
+    padding: 80px 0; text-align: center;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+    mask-image: linear-gradient(to bottom, transparent, #000 22%, #000 78%, transparent);
+  }
+
+  .wheel::-webkit-scrollbar { display: none; }
+
+  .wheel i {
+    display: block; height: 40px; line-height: 40px;
+    scroll-snap-align: center; font-style: normal;
+    font-size: 21px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: var(--label-2);
+    transition: color 0.15s ease, font-size 0.15s ease;
+    cursor: pointer;
+  }
+
+  .wheel i.sel { color: var(--label); font-size: 25px; font-weight: 600; }
+
+  .wheel-labels {
+    display: flex; margin-bottom: 14px;
+    font-size: 12px; font-weight: 600; color: var(--label-2);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+
+  .wheel-labels span { flex: 1; text-align: center; }
+
+  .wheel-total {
+    text-align: center; font-size: 13.5px; color: var(--label-2);
+    margin: 0 0 14px; font-variant-numeric: tabular-nums;
+  }
 
   .boxes-hint {
     padding: 0 4px; margin: 0 0 22px;
@@ -561,14 +616,13 @@
       <input type="number" id="peso" value="45" min="0" step="1" inputmode="decimal">
       <span class="box-unit">gramas</span>
     </label>
-    <div class="box box-tempo">
+    <button type="button" class="box box-tempo" id="btnTempo">
       <span class="box-label">Tempo</span>
-      <span class="dupla">
-        <input type="number" id="tempoH" value="3" min="0" step="1" inputmode="numeric" aria-label="horas"><span class="u">h</span>
-        <input type="number" id="tempoM" value="30" min="0" max="59" step="5" inputmode="numeric" aria-label="minutos"><span class="u">min</span>
-      </span>
+      <span class="box-valor" id="tempoTexto">3h30</span>
       <span class="box-unit">de impressão</span>
-    </div>
+      <input type="hidden" id="tempoH" value="3">
+      <input type="hidden" id="tempoM" value="30">
+    </button>
     <label class="box">
       <span class="box-label">Peças</span>
       <input type="number" id="qtd" value="1" min="1" step="1" inputmode="numeric">
@@ -753,6 +807,26 @@
 <div class="atualizar" id="aviso" hidden>
   <span>Nova versão disponível</span>
   <button type="button" id="avisoBtn">Atualizar</button>
+</div>
+
+<!-- ============ FOLHA: TEMPO ============ -->
+<div class="sheet-wrap" id="sheetTempo" hidden>
+  <div class="backdrop" id="tempoBackdrop"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tempoTitulo">
+    <div class="grabber"></div>
+    <h2 id="tempoTitulo">Tempo de impressão</h2>
+    <div class="wheels">
+      <div class="wheel-band"></div>
+      <div class="wheel" id="wheelH" role="listbox" aria-label="Horas" tabindex="0"></div>
+      <div class="wheel" id="wheelM" role="listbox" aria-label="Minutos" tabindex="0"></div>
+    </div>
+    <div class="wheel-labels"><span>horas</span><span>minutos</span></div>
+    <p class="wheel-total" id="wheelTotal"></p>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-alt" id="tempoCancelar">Cancelar</button>
+      <button type="button" class="btn btn-main" id="tempoOk">Pronto</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============ FOLHA: SALVAR ============ -->
@@ -950,6 +1024,8 @@
       qtd: qtd, horas: horas, falhas: falhas, margem: margem, taxa: taxa
     });
 
+    document.getElementById("tempoTexto").textContent = tempoTexto(horas);
+
     resumos();
 
     ultimo = {
@@ -1041,25 +1117,113 @@
       (num("taxaVenda", 0) > 0 ? " · " + nf(num("taxaVenda", 0), 0) + "% de taxa" : "");
   }
 
-  /* Minutos acima de 59 viram hora, para 3h90 não existir. */
-  function normalizaMinutos() {
-    var m = num("tempoM", 0);
-    if (m >= 60) {
-      el.tempoH.value = String(Math.floor(num("tempoH", 0) + Math.floor(m / 60)));
-      el.tempoM.value = String(Math.round(m % 60));
-      calc();
-    }
-  }
-
   ids.forEach(function (id) {
     el[id].addEventListener("input", calc);
+    if (el[id].type === "hidden") return;
     el[id].addEventListener("focus", function () {
       var i = this;
       setTimeout(function () { try { i.select(); } catch (e) {} }, 1);
     });
   });
 
-  el.tempoM.addEventListener("blur", normalizaMinutos);
+  /* ---- Roleta de tempo ----
+     Cada item tem 40px e a faixa fica no centro dos 200px visíveis, então
+     centralizar o item i é simplesmente scrollTop = i * 40. */
+
+  var ITEM = 40;
+  var sheetTempo = document.getElementById("sheetTempo");
+  var wheelH = document.getElementById("wheelH");
+  var wheelM = document.getElementById("wheelM");
+
+  function montaRoleta(w, ate, formata) {
+    var html = "";
+    for (var i = 0; i <= ate; i++) {
+      html += '<i role="option" data-v="' + i + '">' + (formata ? formata(i) : i) + '</i>';
+    }
+    w.innerHTML = html;
+  }
+
+  montaRoleta(wheelH, 99);
+  montaRoleta(wheelM, 59, function (i) { return String(i).padStart(2, "0"); });
+
+  function indiceDe(w) {
+    return Math.max(0, Math.min(w.children.length - 1, Math.round(w.scrollTop / ITEM)));
+  }
+
+  function marcaSelecionado(w) {
+    var i = indiceDe(w);
+    for (var k = 0; k < w.children.length; k++) {
+      var sel = k === i;
+      var it = w.children[k];
+      if (it.classList.contains("sel") !== sel) it.classList.toggle("sel", sel);
+      it.setAttribute("aria-selected", sel ? "true" : "false");
+    }
+    return i;
+  }
+
+  function totalRoleta() {
+    var h = indiceDe(wheelH), m = indiceDe(wheelM);
+    document.getElementById("wheelTotal").textContent =
+      h === 0 && m === 0 ? "Escolha o tempo do job" : "Total: " + tempoTexto(h + m / 60);
+  }
+
+  [wheelH, wheelM].forEach(function (w) {
+    var t;
+    w.addEventListener("scroll", function () {
+      clearTimeout(t);
+      t = setTimeout(function () { marcaSelecionado(w); totalRoleta(); }, 60);
+    }, { passive: true });
+
+    /* Toque e teclado posicionam direto. Rolagem suave depende de quadros
+       sendo desenhados e briga com o encaixe; arrastar o dedo já é rolagem
+       nativa e continua com a inércia de sempre. */
+    function vaiPara(i) {
+      w.scrollTop = Math.max(0, Math.min(w.children.length - 1, i)) * ITEM;
+      marcaSelecionado(w);
+      totalRoleta();
+    }
+
+    w.addEventListener("click", function (ev) {
+      var it = ev.target.closest("i[data-v]");
+      if (it) vaiPara(parseInt(it.getAttribute("data-v"), 10));
+    });
+
+    w.addEventListener("keydown", function (ev) {
+      var d = ev.key === "ArrowDown" ? 1 : ev.key === "ArrowUp" ? -1 : 0;
+      if (!d) return;
+      ev.preventDefault();
+      vaiPara(indiceDe(w) + d);
+    });
+  });
+
+  function posiciona(w, v) {
+    w.scrollTop = Math.max(0, Math.min(w.children.length - 1, v)) * ITEM;
+    marcaSelecionado(w);
+  }
+
+  function abrirTempo() {
+    sheetTempo.hidden = false;
+    /* Ler offsetHeight força o navegador a calcular o tamanho agora. Sem
+       isto, na primeira abertura a roleta ainda não tem altura e o
+       scrollTop não gruda — ela abria sempre no zero. */
+    void wheelH.offsetHeight;
+    posiciona(wheelH, Math.round(num("tempoH", 0)));
+    posiciona(wheelM, Math.round(num("tempoM", 0)));
+    totalRoleta();
+  }
+
+  function fecharTempo() { sheetTempo.hidden = true; }
+
+  document.getElementById("btnTempo").addEventListener("click", abrirTempo);
+  document.getElementById("tempoCancelar").addEventListener("click", fecharTempo);
+  document.getElementById("tempoBackdrop").addEventListener("click", fecharTempo);
+
+  document.getElementById("tempoOk").addEventListener("click", function () {
+    el.tempoH.value = String(indiceDe(wheelH));
+    el.tempoM.value = String(indiceDe(wheelM));
+    fecharTempo();
+    calc();
+  });
 
   /* ---- Recolhíveis ---- */
 
@@ -1593,6 +1757,7 @@
     if (ev.key !== "Escape") return;
     if (!sheet.hidden) fecharSheet();
     if (!sheetAuth.hidden) sheetAuth.hidden = true;
+    if (!sheetTempo.hidden) fecharTempo();
   });
 
   window.addEventListener("online", function () { sincronizar(); });
