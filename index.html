@@ -34,6 +34,7 @@
     --c-manut:    #ff3b30;
     --c-trabalho: #af52de;
     --c-risco:    #8e8e93;
+    --seg-pill: #ffffff;
     --safe-t: env(safe-area-inset-top, 0px);
     --safe-b: env(safe-area-inset-bottom, 0px);
     --safe-l: env(safe-area-inset-left, 0px);
@@ -58,6 +59,7 @@
       --c-manut:    #ff453a;
       --c-trabalho: #bf5af2;
       --c-risco:    #98989d;
+      --seg-pill: #636366;
     }
   }
 
@@ -68,6 +70,7 @@
     --fill: rgba(120,120,128,0.24); --chrome: rgba(0,0,0,0.80);
     --c-material: #ff9f0a; --c-energia: #30d158; --c-deprec: #0a84ff;
     --c-manut: #ff453a; --c-trabalho: #bf5af2; --c-risco: #98989d;
+    --seg-pill: #636366;
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -327,6 +330,53 @@
     padding: 0 4px; margin: 0 0 22px;
     font-size: 12.5px; color: var(--label-2); line-height: 1.45;
   }
+
+  /* ---------- Seletor segmentado ---------- */
+
+  .seg {
+    display: flex; background: var(--fill);
+    border-radius: 10px; padding: 2px; margin-bottom: 22px;
+  }
+
+  .seg button {
+    flex: 1; appearance: none; border: none; background: transparent;
+    color: var(--label); font: inherit; font-size: 14px; font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    padding: 9px 4px; min-height: 40px; border-radius: 8px; cursor: pointer;
+    transition: background 0.18s ease;
+  }
+
+  .seg button[aria-pressed="true"] {
+    background: var(--seg-pill); font-weight: 600;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 1px 1px rgba(0,0,0,0.04);
+  }
+
+  .seg button:active { opacity: 0.55; }
+
+  /* ---------- Botão de ajuda ---------- */
+
+  .sec-help {
+    appearance: none; border: none; background: var(--fill);
+    color: var(--accent); font: inherit; font-size: 13px; font-weight: 700;
+    width: 22px; height: 22px; border-radius: 50%; padding: 0;
+    cursor: pointer; flex: none; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+    /* área de toque de 44px sem inchar o círculo */
+    position: relative;
+  }
+
+  .sec-help::after {
+    content: ""; position: absolute;
+    top: -11px; bottom: -11px; left: -11px; right: -11px;
+  }
+
+  .sec-help:active { opacity: 0.5; }
+
+  .ajuda-texto { font-size: 15px; line-height: 1.55; color: var(--label); }
+  .ajuda-texto p { margin: 0 0 14px; }
+  .ajuda-texto p:last-child { margin-bottom: 0; }
+  .ajuda-texto b { font-weight: 600; }
+  .ajuda-texto .fraco { color: var(--label-2); }
 
   /* ---------- Relatório ---------- */
 
@@ -663,7 +713,10 @@
   <p class="rel-rodape" id="relRodape"></p>
 
   <!-- ============ AJUSTES DE CUSTO ============ -->
-  <div class="sec-head"><span>Quanto custa produzir</span></div>
+  <div class="sec-head">
+    <span>Quanto custa produzir</span>
+    <button type="button" class="sec-help" data-ajuda="custo" aria-label="O que entra no custo">?</button>
+  </div>
   <div class="group">
     <button type="button" class="row disclosure" id="custoToggle" aria-expanded="false">
       <span class="row-label">Ajustes de custo
@@ -734,7 +787,10 @@
   </div><!-- /#ajustes -->
 
   <!-- ============ AJUSTES DE PREÇO ============ -->
-  <div class="sec-head"><span>Seu trabalho</span></div>
+  <div class="sec-head">
+    <span>Seu trabalho</span>
+    <button type="button" class="sec-help" data-ajuda="trabalho" aria-label="O que entra em seu trabalho">?</button>
+  </div>
   <div class="boxes b2">
     <label class="box">
       <span class="box-label">Acabamento</span>
@@ -749,7 +805,10 @@
   </div>
   <p class="boxes-hint">Acabamento é o tempo por peça pra tirar suporte, lixar e montar.</p>
 
-  <div class="sec-head"><span>Quanto você quer ganhar</span></div>
+  <div class="sec-head">
+    <span>Quanto você quer ganhar</span>
+    <button type="button" class="sec-help" data-ajuda="ganho" aria-label="Entenda margem e multiplicador">?</button>
+  </div>
   <div class="boxes b3">
     <label class="box">
       <span class="box-label">Falhas</span>
@@ -768,30 +827,17 @@
     </label>
   </div>
 
-  <div class="presets" id="presetsMargem">
-    <button type="button" class="preset" data-m="30">30%</button>
-    <button type="button" class="preset" data-m="40">40%</button>
-    <button type="button" class="preset" data-m="50">50%</button>
-    <button type="button" class="preset" data-m="60">60%</button>
+  <div class="seg" id="presetsMargem" role="group" aria-label="Margens comuns">
+    <button type="button" data-m="30">30%</button>
+    <button type="button" data-m="40">40%</button>
+    <button type="button" data-m="50">50%</button>
+    <button type="button" data-m="60">60%</button>
   </div>
 
-  <div class="group">
-    <div class="explica">
-      <b>Margem</b> e <b>multiplicador</b> são a mesma coisa dita de dois jeitos —
-      mexa no que fizer mais sentido pra você, o outro acompanha.<br><br>
-      A margem é sobre o <b>preço</b>: com 40%, de cada R$ 100 que entram, R$ 40
-      sobram pra você depois de pagar tudo. O multiplicador é sobre o
-      <b>custo de fabricar</b>: 2,8× quer dizer que a peça sai por R$ 10 e é
-      vendida por R$ 28.<br><br>
-      <b>Reserva para falhas:</b> se 1 em cada 10 impressões dá errado, você
-      gastou material e máquina numa peça que não vende — quem paga essa conta
-      são as que deram certo.<br><br>
-      Não existe número certo pra margem: 30% a 50% é onde costuma ficar quem
-      vende peça impressa, mas quem decide é você.
-    </div>
+  <div class="sec-head">
+    <span>Onde você vende</span>
+    <button type="button" class="sec-help" data-ajuda="taxa" aria-label="Como a taxa entra no preço">?</button>
   </div>
-
-  <div class="sec-head"><span>Onde você vende</span></div>
   <div class="boxes b1 fim">
     <label class="box">
       <span class="box-label">Taxa da plataforma</span>
@@ -827,6 +873,19 @@
 <div class="atualizar" id="aviso" hidden>
   <span>Nova versão disponível</span>
   <button type="button" id="avisoBtn">Atualizar</button>
+</div>
+
+<!-- ============ FOLHA: AJUDA ============ -->
+<div class="sheet-wrap" id="sheetAjuda" hidden>
+  <div class="backdrop" id="ajudaBackdrop"></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ajudaTitulo">
+    <div class="grabber"></div>
+    <h2 id="ajudaTitulo"></h2>
+    <div class="ajuda-texto" id="ajudaTexto"></div>
+    <div class="sheet-actions" style="margin-top:18px">
+      <button type="button" class="btn btn-main" id="ajudaOk">Entendi</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============ FOLHA: TEMPO ============ -->
@@ -1131,7 +1190,7 @@
       "/h máquina · " + nf(num("potencia", 0), 0) + " W · toque para ajustar";
 
     var m = num("margem", 0);
-    [].forEach.call(document.querySelectorAll("#presetsMargem .preset"), function (b) {
+    [].forEach.call(document.querySelectorAll("#presetsMargem button"), function (b) {
       b.setAttribute("aria-pressed", parseFloat(b.getAttribute("data-m")) === m);
     });
   }
@@ -1328,6 +1387,81 @@
     el.margem.value = b.getAttribute("data-m");
     calc();
   });
+
+  /* ---- Ajuda: os textos longos saem da tela e ficam atrás do "?" ---- */
+
+  var AJUDA = {
+    ganho: {
+      titulo: "Quanto você quer ganhar",
+      html:
+        "<p><b>Margem</b> e <b>multiplicador</b> são a mesma coisa dita de dois " +
+        "jeitos. Mexa no que fizer mais sentido pra você — o outro acompanha " +
+        "sozinho.</p>" +
+        "<p>A <b>margem</b> é sobre o preço: com 40%, de cada R$ 100 que entram, " +
+        "R$ 40 sobram pra você depois de pagar tudo.</p>" +
+        "<p>O <b>multiplicador</b> é sobre o custo de fabricar: 2,8× quer dizer " +
+        "que a peça sai por R$ 10 e é vendida por R$ 28.</p>" +
+        "<p><b>Reserva para falhas:</b> se 1 em cada 10 impressões dá errado, " +
+        "você gastou material e máquina numa peça que não vende. Quem paga essa " +
+        "conta são as que deram certo.</p>" +
+        "<p class='fraco'>Não existe número certo pra margem. 30% a 50% é onde " +
+        "costuma ficar quem vende peça impressa, mas quem decide é você.</p>"
+    },
+    taxa: {
+      titulo: "Taxa da plataforma",
+      html:
+        "<p>Shopee, Mercado Livre, Elo7, maquininha de cartão — todo lugar que " +
+        "fica com uma parte da venda. Deixe <b>0</b> se você vende direto e " +
+        "recebe por Pix ou dinheiro.</p>" +
+        "<p>A taxa entra <b>no preço</b>, não sai do seu lucro. Com 20% de " +
+        "comissão, um preço de R$ 26,55 vira R$ 33,19 no anúncio — e você " +
+        "continua recebendo os R$ 26,55.</p>" +
+        "<p class='fraco'>Sem esse ajuste, a comissão comeria o que sobra pra " +
+        "você, que é o erro mais comum de quem começa a vender em marketplace.</p>"
+    },
+    trabalho: {
+      titulo: "Seu trabalho",
+      html:
+        "<p><b>Acabamento</b> é o tempo que você gasta por peça depois que a " +
+        "impressão termina: tirar suporte, lixar, colar, montar, limpar.</p>" +
+        "<p><b>Sua hora</b> é quanto vale seu tempo. Não é lucro — é pagamento " +
+        "pelo trabalho. O lucro vem depois, na margem.</p>" +
+        "<p class='fraco'>Deixar isso de fora é o jeito mais rápido de trabalhar " +
+        "de graça sem perceber.</p>"
+    },
+    custo: {
+      titulo: "Quanto custa produzir",
+      html:
+        "<p><b>Filamento:</b> o preço do quilo que você paga. O peso do job já " +
+        "inclui purga e suporte, então o desperdício está contado.</p>" +
+        "<p><b>Tarifa e potência:</b> o que a impressora consome de luz. " +
+        "A tarifa está na sua conta; a potência é a média imprimindo.</p>" +
+        "<p><b>Depreciação:</b> a impressora não dura pra sempre. Cada hora " +
+        "impressa gasta um pedaço dela, e esse pedaço tem preço.</p>" +
+        "<p><b>Manutenção:</b> bico, placa, correias, lubrificação — o rateio " +
+        "por hora de máquina.</p>"
+    }
+  };
+
+  var sheetAjuda = document.getElementById("sheetAjuda");
+
+  function abrirAjuda(chave) {
+    var a = AJUDA[chave];
+    if (!a) return;
+    document.getElementById("ajudaTitulo").textContent = a.titulo;
+    document.getElementById("ajudaTexto").innerHTML = a.html;
+    sheetAjuda.hidden = false;
+  }
+
+  function fecharAjuda() { sheetAjuda.hidden = true; }
+
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-ajuda]");
+    if (b) abrirAjuda(b.getAttribute("data-ajuda"));
+  });
+
+  document.getElementById("ajudaOk").addEventListener("click", fecharAjuda);
+  document.getElementById("ajudaBackdrop").addEventListener("click", fecharAjuda);
 
   /* ================= Cálculos salvos ================= */
 
@@ -1811,6 +1945,7 @@
     if (!sheet.hidden) fecharSheet();
     if (!sheetAuth.hidden) sheetAuth.hidden = true;
     if (!sheetTempo.hidden) fecharTempo();
+    if (!sheetAjuda.hidden) fecharAjuda();
   });
 
   window.addEventListener("online", function () { sincronizar(); });
