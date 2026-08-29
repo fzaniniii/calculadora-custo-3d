@@ -1,0 +1,1071 @@
+@charset "utf-8";
+
+/* ==========================================================================
+   Bancada — sistema visual
+
+   Três decisões governam tudo aqui:
+
+   1. A interface é monocromática. Cor só aparece onde ela carrega
+      informação: a composição do preço e a saúde da margem. Botão, campo
+      e cabeçalho são tinta sobre papel. Isso é o oposto do app genérico,
+      que pinta o cromo e deixa o dado cinza.
+
+   2. Não existe cartão. Densidade de instrumento se faz com fio de 1px e
+      alinhamento, não com caixa flutuante e sombra.
+
+   3. Todo número é tabular. Valor que muda enquanto o dedo arrasta não
+      pode dançar de largura.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("fontes/geist-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+                 U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+                 U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("fontes/geist-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF,
+                 U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+                 U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ---------------------------------------------------------------- tokens -- */
+
+:root {
+  /* Grafite quente. Preto puro e branco puro matam a profundidade, então
+     nenhum dos dois aparece. */
+  --papel:      #f4f3f0;
+  --campo:      #fbfaf8;
+  --campo-alto: #ffffff;
+  --tinta:      #1a1917;
+  --tinta-2:    #605c55;
+  --tinta-3:    #918c83;
+  --linha:      rgb(26 25 23 / .11);
+  --linha-forte:rgb(26 25 23 / .20);
+  --toque:      rgb(26 25 23 / .05);
+  --vidro:      rgb(244 243 240 / .72);
+  --sombra:     0 1px 2px rgb(26 25 23 / .05), 0 8px 28px rgb(26 25 23 / .07);
+  --sombra-alta:0 2px 6px rgb(26 25 23 / .08), 0 24px 60px rgb(26 25 23 / .18);
+
+  /* As sete faixas da composição do preço. Sequência quente-para-fria,
+     dessaturada de propósito: é um gráfico, não um arco-íris. O lucro é a
+     própria tinta, porque é o que você está aqui para ver. */
+  --f-filamento:  #bf6a3d;
+  --f-energia:    #7d8d4e;
+  --f-maquina:    #4e7984;
+  --f-acabamento: #5b6aa6;
+  --f-risco:      #9a5671;
+  --f-taxa:       #8a857f;
+  --f-lucro:      var(--tinta);
+
+  /* Rampa de saúde: vermelho a verde. Usada na margem, no desconto e no
+     aviso de lucro. */
+  --rampa-0: #b4442f;
+  --rampa-1: #c07a2a;
+  --rampa-2: #8a8a33;
+  --rampa-3: #4f8a45;
+
+  --r-campo: 10px;
+  --r-folha: 22px;
+  --r-pilula: 999px;
+
+  /* Curvas fortes. As nativas do CSS são fracas demais para parecerem
+     decididas. A de gaveta veio do Ionic e é a que o iOS usa. */
+  --saida:   cubic-bezier(.23, 1, .32, 1);
+  --entrada: cubic-bezier(.77, 0, .175, 1);
+  --gaveta:  cubic-bezier(.32, .72, 0, 1);
+
+  --seguro-topo: env(safe-area-inset-top, 0px);
+  --seguro-base: env(safe-area-inset-bottom, 0px);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --papel:      #131211;
+    --campo:      #1c1b19;
+    --campo-alto: #232220;
+    --tinta:      #f3f1ec;
+    --tinta-2:    #a09b93;
+    --tinta-3:    #726d66;
+    --linha:      rgb(255 255 255 / .10);
+    --linha-forte:rgb(255 255 255 / .18);
+    --toque:      rgb(255 255 255 / .06);
+    --vidro:      rgb(19 18 17 / .72);
+    --sombra:     0 1px 2px rgb(0 0 0 / .40), 0 8px 28px rgb(0 0 0 / .30);
+    --sombra-alta:0 2px 6px rgb(0 0 0 / .45), 0 24px 60px rgb(0 0 0 / .55);
+
+    --f-filamento:  #d98a5c;
+    --f-energia:    #9db06a;
+    --f-maquina:    #6fa0ac;
+    --f-acabamento: #8290c9;
+    --f-risco:      #c07b94;
+    --f-taxa:       #9d978f;
+
+    --rampa-0: #e0644c;
+    --rampa-1: #e0a04a;
+    --rampa-2: #b3b356;
+    --rampa-3: #6fb063;
+  }
+}
+
+/* --------------------------------------------------------------- alicerce -- */
+
+* { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--papel);
+}
+
+body {
+  margin: 0;
+  font-family: "Geist", system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--tinta);
+  background: var(--papel);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+  /* Nada de seleção acidental de texto no meio de um arrasto. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+input, button, select, textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+/* Todo número da interface é tabular e com tracking fechado. */
+.num {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "cv01" 1;
+  letter-spacing: -.01em;
+}
+
+.rotulo {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.fraco { color: var(--tinta-2); }
+
+/* Anel de foco visível só para quem navega por teclado. */
+:focus-visible {
+  outline: 2px solid var(--tinta);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ------------------------------------------------------------------ folha -- */
+
+.folha {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 20px calc(120px + var(--seguro-base));
+}
+
+/* ---------------------------------------------------------------- cimeira --
+   Barra translúcida com o preço. O conteúdo passa por baixo dela. No lugar
+   de uma borda dura, uma máscara desfaz o encontro. */
+
+.cimeira {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: calc(var(--seguro-topo) + 14px) 20px 14px;
+  background: var(--vidro);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  transition: box-shadow 220ms var(--saida);
+}
+
+.cimeira::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 -18px 0;
+  height: 18px;
+  pointer-events: none;
+  background: linear-gradient(var(--papel), transparent);
+  opacity: 0;
+  transition: opacity 220ms var(--saida);
+}
+
+.cimeira[data-rolado="sim"]::after { opacity: 1; }
+
+.cimeira-corpo {
+  max-width: 640px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.preco {
+  font-size: clamp(2.6rem, 13vw, 3.6rem);
+  font-weight: 560;
+  line-height: .92;
+  /* Tracking negativo cresce com o tamanho: letra grande lê espaçada. */
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+  display: block;
+}
+
+.preco-cifra {
+  font-size: .46em;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--tinta-3);
+  margin-right: .18em;
+  vertical-align: .34em;
+}
+
+.preco-nota {
+  margin-top: 5px;
+  font-size: 12.5px;
+  color: var(--tinta-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.preco-nota b { font-weight: 560; color: var(--tinta); }
+
+.cimeira-acoes { display: flex; gap: 6px; padding-bottom: 3px; }
+
+/* ------------------------------------------------------------------ botão -- */
+
+.btn {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 140ms var(--saida), background-color 140ms var(--saida),
+              opacity 140ms var(--saida);
+}
+
+/* A resposta vive no toque, não na soltura. */
+.btn:active { transform: scale(.96); }
+
+.btn-icone {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pilula);
+  display: grid;
+  place-items: center;
+  color: var(--tinta-2);
+  background: var(--toque);
+}
+
+.btn-icone:active { background: var(--linha); }
+.btn-icone svg { width: 19px; height: 19px; display: block; }
+
+.btn-solido {
+  height: 50px;
+  padding: 0 22px;
+  border-radius: var(--r-campo);
+  background: var(--tinta);
+  color: var(--papel);
+  font-size: 16px;
+  font-weight: 560;
+  display: inline-grid;
+  place-items: center;
+}
+
+.btn-vazado {
+  height: 50px;
+  padding: 0 22px;
+  border-radius: var(--r-campo);
+  border: 1px solid var(--linha-forte);
+  font-size: 16px;
+  font-weight: 500;
+  display: inline-grid;
+  place-items: center;
+}
+
+.btn-vazado:active { background: var(--toque); }
+
+.btn-largo { width: 100%; }
+
+/* ------------------------------------------------------------------ seção -- */
+
+.secao { margin-top: 34px; }
+
+.secao-titulo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.secao-titulo h2 {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.secao-titulo .acao {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tinta-2);
+  background: none;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.secao-titulo .acao:active { opacity: .5; }
+
+/* ------------------------------------------------------------- filamentos --
+   Trilho horizontal com encaixe. Trocar de material é um toque, não uma
+   edição de campo. */
+
+.trilho {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 2px 20px 2px 0;
+  margin: 0 -20px 0 0;
+  scrollbar-width: none;
+}
+
+.trilho::-webkit-scrollbar { display: none; }
+
+.fita {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  height: 46px;
+  padding: 0 15px 0 12px;
+  border-radius: var(--r-pilula);
+  border: 1px solid var(--linha);
+  background: var(--campo);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: transform 140ms var(--saida), border-color 140ms var(--saida),
+              background-color 140ms var(--saida);
+}
+
+.fita:active { transform: scale(.97); }
+
+.fita[aria-selected="true"] {
+  border-color: var(--tinta);
+  background: var(--campo-alto);
+  box-shadow: inset 0 0 0 1px var(--tinta);
+}
+
+.fita-gota {
+  width: 15px;
+  height: 15px;
+  border-radius: var(--r-pilula);
+  flex: 0 0 auto;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / .16);
+}
+
+.fita-texto { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+.fita-nome { font-size: 14px; font-weight: 500; }
+.fita-preco { font-size: 11px; color: var(--tinta-3); font-variant-numeric: tabular-nums; }
+
+.fita-mais {
+  width: 46px;
+  padding: 0;
+  justify-content: center;
+  color: var(--tinta-3);
+}
+
+/* ------------------------------------------------------------------ malha --
+   As quatro entradas diárias. Fio de 1px separando, sem caixa. */
+
+.malha {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--linha);
+  border-left: 1px solid var(--linha);
+}
+
+.celula {
+  border-right: 1px solid var(--linha);
+  border-bottom: 1px solid var(--linha);
+  padding: 13px 14px 12px;
+  min-width: 0;
+  position: relative;
+  background: var(--campo);
+  transition: background-color 140ms var(--saida);
+}
+
+.celula:first-child { border-top-left-radius: var(--r-campo); }
+.celula:nth-child(2) { border-top-right-radius: var(--r-campo); }
+.celula:nth-last-child(2) { border-bottom-left-radius: var(--r-campo); }
+.celula:last-child { border-bottom-right-radius: var(--r-campo); }
+
+.celula:focus-within { background: var(--campo-alto); }
+
+.celula label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  margin-bottom: 5px;
+}
+
+.celula-valor {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+/* O campo numérico não parece um campo. Parece o número. */
+.celula input {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  font-size: 25px;
+  font-weight: 540;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.celula input::-webkit-outer-spin-button,
+.celula input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.celula input[type="number"] { -moz-appearance: textfield; }
+.celula input:focus { outline: none; }
+
+.celula-un {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tinta-3);
+  flex: 0 0 auto;
+}
+
+/* Botão que abre a roleta. Veste-se de célula. */
+.celula-botao {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+  font-size: 25px;
+  font-weight: 540;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.celula-botao:active { opacity: .45; }
+.celula-botao small { font-size: 13px; font-weight: 500; color: var(--tinta-3); margin-left: 2px; }
+
+.celula-dica {
+  font-size: 11px;
+  color: var(--tinta-3);
+  margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+  min-height: 1em;
+}
+
+/* ------------------------------------------------------------------ régua --
+   Arrasto 1:1, resistência progressiva na borda, assentamento por mola.
+   A cor do traço e do número segue a saúde do valor. */
+
+.regua { margin-top: 14px; }
+
+.regua-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+
+.regua-nome {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.regua-valor {
+  font-size: 21px;
+  font-weight: 560;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+  transition: color 220ms var(--saida);
+}
+
+.regua-pista {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.regua-pista:active { cursor: grabbing; }
+
+.regua-fundo {
+  position: absolute;
+  inset: 50% 0 auto 0;
+  transform: translateY(-50%);
+  height: 7px;
+  border-radius: var(--r-pilula);
+  background: var(--linha);
+  overflow: hidden;
+}
+
+.regua-cheio {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: var(--r-pilula);
+  background: var(--tinta-3);
+  will-change: width;
+}
+
+.regua-pino {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  border-radius: var(--r-pilula);
+  background: var(--campo-alto);
+  box-shadow: 0 1px 2px rgb(0 0 0 / .10), 0 4px 12px rgb(0 0 0 / .14),
+              inset 0 0 0 1px var(--linha-forte);
+  will-change: transform;
+  transition: box-shadow 140ms var(--saida);
+}
+
+.regua-pista[data-arrastando="sim"] .regua-pino {
+  box-shadow: 0 1px 2px rgb(0 0 0 / .12), 0 8px 22px rgb(0 0 0 / .22),
+              inset 0 0 0 1px var(--linha-forte);
+}
+
+/* Em fluxo, não absolutas: soltas, elas se ancoravam no viewport e
+   flutuavam por cima do resto da página. */
+.regua-marcas {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -7px;
+  font-size: 10px;
+  color: var(--tinta-3);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ barra --
+   Composição do preço numa faixa só. Sete segmentos, um por linha do
+   relatório. É o resumo que se lê num relance. */
+
+.barra {
+  display: flex;
+  height: 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  gap: 1.5px;
+  margin-bottom: 14px;
+}
+
+.barra-parte {
+  min-width: 0;
+  transition: flex-basis 260ms var(--saida);
+  border-radius: 1.5px;
+}
+
+/* --------------------------------------------------------------- extrato --
+   Cada linha soma na de baixo. Sem multiplicador mágico. */
+
+.extrato { border-top: 1px solid var(--linha); }
+
+.linha {
+  display: grid;
+  grid-template-columns: 3px 1fr auto;
+  gap: 11px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--linha);
+}
+
+.linha-tinta { border-radius: 2px; align-self: stretch; margin: 2px 0; }
+
+.linha-nome { font-size: 14.5px; min-width: 0; }
+.linha-sub { display: block; font-size: 11.5px; color: var(--tinta-3); margin-top: 1px; }
+
+.linha-valor {
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+
+.linha[data-peso="soma"] { border-bottom-width: 0; }
+
+.linha[data-peso="soma"] .linha-nome,
+.linha[data-peso="soma"] .linha-valor { font-weight: 600; }
+
+.linha[data-peso="total"] {
+  border-top: 1px solid var(--linha-forte);
+  border-bottom: 0;
+  padding-top: 13px;
+  margin-top: -1px;
+}
+
+.linha[data-peso="total"] .linha-nome { font-size: 16px; font-weight: 600; }
+.linha[data-peso="total"] .linha-valor { font-size: 21px; font-weight: 600; letter-spacing: -.02em; }
+
+.linha[data-sinal="menos"] .linha-valor { color: var(--tinta-2); }
+
+/* ------------------------------------------------------------------ aviso -- */
+
+.aviso {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--r-campo);
+  border: 1px solid var(--linha);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--tinta-2);
+  background: var(--campo);
+}
+
+.aviso[data-tom="alerta"] {
+  border-color: color-mix(in srgb, var(--rampa-0) 40%, transparent);
+  background: color-mix(in srgb, var(--rampa-0) 7%, var(--campo));
+  color: var(--tinta);
+}
+
+.aviso b { font-weight: 560; color: var(--tinta); }
+
+/* ----------------------------------------------------------------- painel --
+   Os números que o pedido produz. Três medidas, sem caixa. */
+
+.painel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--linha);
+  border: 1px solid var(--linha);
+  border-radius: var(--r-campo);
+  overflow: hidden;
+}
+
+.painel div {
+  background: var(--campo);
+  padding: 12px 13px;
+}
+
+.painel dt {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  margin-bottom: 4px;
+}
+
+.painel dd {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 560;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.painel dd small { font-size: 12px; font-weight: 500; color: var(--tinta-3); }
+
+/* ------------------------------------------------------------------ gaveta --
+   Entra e sai pelo mesmo caminho. Arrastável, com desistência por
+   velocidade, não por distância. */
+
+.cortina {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / .34);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms var(--gaveta);
+}
+
+.cortina[data-aberta="sim"] { opacity: 1; pointer-events: auto; }
+
+.gaveta {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--papel);
+  border-radius: var(--r-folha) var(--r-folha) 0 0;
+  box-shadow: var(--sombra-alta);
+  transform: translate3d(0, 100%, 0);
+  transition: transform 420ms var(--gaveta);
+  will-change: transform;
+  touch-action: none;
+}
+
+.gaveta[data-aberta="sim"] { transform: translate3d(0, 0, 0); }
+.gaveta[data-arrastando="sim"] { transition: none; }
+
+.gaveta-alca {
+  flex: 0 0 auto;
+  padding: 9px 0 4px;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+}
+
+.gaveta-alca::before {
+  content: "";
+  width: 36px;
+  height: 4px;
+  border-radius: var(--r-pilula);
+  background: var(--linha-forte);
+}
+
+.gaveta-topo {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 20px 12px;
+}
+
+.gaveta-topo h2 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+}
+
+.gaveta-corpo {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  padding: 0 20px calc(24px + var(--seguro-base));
+}
+
+/* ------------------------------------------------------------- ajustes --
+   Campos que se configuram uma vez. Densos, alinhados à direita. */
+
+.grupo { margin-top: 26px; }
+.grupo:first-child { margin-top: 4px; }
+
+.grupo > h3 {
+  margin: 0 0 9px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.pilha {
+  border: 1px solid var(--linha);
+  border-radius: var(--r-campo);
+  overflow: hidden;
+  background: var(--campo);
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--linha);
+  min-height: 52px;
+}
+
+.pilha .item:last-child { border-bottom: 0; }
+
+.item-texto { flex: 1 1 auto; min-width: 0; }
+.item-nome { font-size: 15px; display: block; }
+.item-sub { font-size: 11.5px; color: var(--tinta-3); display: block; margin-top: 1px; }
+
+.item input[type="number"],
+.item input[type="text"] {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 6px 0;
+  width: 108px;
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 17px;
+  font-weight: 540;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.01em;
+}
+
+.item input:focus { outline: none; }
+.item input::-webkit-outer-spin-button,
+.item input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.item input[type="number"] { -moz-appearance: textfield; }
+
+.item-un {
+  font-size: 12.5px;
+  color: var(--tinta-3);
+  flex: 0 0 auto;
+  width: 34px;
+  text-align: left;
+  margin-left: -8px;
+}
+
+.item-botao { cursor: pointer; touch-action: manipulation; text-align: left; width: 100%; border: 0; background: none; }
+.item-botao:active { background: var(--toque); }
+
+.nota {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tinta-3);
+  margin: 8px 2px 0;
+}
+
+/* ------------------------------------------------------------------ roleta --
+   Rolagem com encaixe nativo, projeção de inércia e assentamento. O que
+   marca o valor é a faixa fixa no centro, não o item destacado. */
+
+.roletas {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  height: 210px;
+  margin: 6px 0 20px;
+}
+
+.roletas::before {
+  content: "";
+  position: absolute;
+  inset: 50% 8px auto;
+  height: 44px;
+  transform: translateY(-50%);
+  border-radius: var(--r-campo);
+  background: var(--toque);
+  pointer-events: none;
+}
+
+/* A névoa nas pontas dá profundidade ao cilindro sem desenhar cilindro. */
+.roletas::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(var(--papel) 6%, transparent 36%, transparent 64%, var(--papel) 94%);
+}
+
+.roleta {
+  width: 96px;
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  text-align: center;
+}
+
+.roleta::-webkit-scrollbar { display: none; }
+
+.roleta li {
+  height: 44px;
+  scroll-snap-align: center;
+  display: grid;
+  place-items: center;
+  font-size: 25px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+  color: var(--tinta-3);
+  cursor: pointer;
+  transition: color 160ms var(--saida), transform 160ms var(--saida);
+}
+
+.roleta li:active { transform: scale(.9); }
+
+@media (hover: hover) and (pointer: fine) {
+  .roleta li:hover { color: var(--tinta-2); }
+}
+
+.roleta li[aria-selected="true"] {
+  color: var(--tinta);
+  font-weight: 600;
+}
+
+.roleta ul { list-style: none; margin: 0; padding: 83px 0; }
+
+.roleta-un {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12.5px;
+  color: var(--tinta-3);
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ lista -- */
+
+.vazio {
+  padding: 34px 20px;
+  text-align: center;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--tinta-3);
+}
+
+.vazio b { display: block; font-size: 15px; font-weight: 540; color: var(--tinta-2); margin-bottom: 5px; }
+
+/* ---------------------------------------------------------------- rodapé -- */
+
+.acoes-fixas {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 19;
+  padding: 12px 20px calc(12px + var(--seguro-base));
+  display: flex;
+  gap: 9px;
+  background: var(--vidro);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+}
+
+.acoes-fixas::before {
+  content: "";
+  position: absolute;
+  inset: -18px 0 auto 0;
+  height: 18px;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--papel));
+}
+
+.acoes-corpo {
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  gap: 9px;
+}
+
+.acoes-corpo .btn-solido { flex: 1 1 auto; }
+
+/* ---------------------------------------------------------------- tarja -- */
+
+.tarja {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + var(--seguro-base));
+  z-index: 50;
+  padding: 13px 15px;
+  border-radius: var(--r-campo);
+  background: var(--tinta);
+  color: var(--papel);
+  box-shadow: var(--sombra-alta);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  max-width: 616px;
+  margin: 0 auto;
+  transform: translate3d(0, calc(100% + 24px), 0);
+  transition: transform 420ms var(--gaveta);
+}
+
+.tarja[data-aberta="sim"] { transform: translate3d(0, 0, 0); }
+.tarja button {
+  margin-left: auto;
+  flex: 0 0 auto;
+  border: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-size: 13.5px;
+  font-weight: 560;
+  padding: 8px 14px;
+  border-radius: var(--r-pilula);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.tarja button:active { transform: scale(.96); }
+
+/* ------------------------------------------------------------ preferências -- */
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-icone:hover { background: var(--linha); }
+  .fita:hover { border-color: var(--linha-forte); }
+  .item-botao:hover { background: var(--toque); }
+  .secao-titulo .acao:hover { color: var(--tinta); }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .cimeira, .acoes-fixas { background: var(--papel); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .cortina { backdrop-filter: none; -webkit-backdrop-filter: none; background: rgb(0 0 0 / .5); }
+}
+
+/* Movimento reduzido não é movimento zero: o que informa continua, o que
+   desloca some. */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  .gaveta { transition: opacity 200ms ease; transform: none; opacity: 0; pointer-events: none; }
+  .gaveta[data-aberta="sim"] { opacity: 1; pointer-events: auto; }
+  .tarja { transition: opacity 200ms ease; transform: none; opacity: 0; }
+  .tarja[data-aberta="sim"] { opacity: 1; }
+  .btn:active, .fita:active, .tarja button:active { transform: none; }
+  .roleta { scroll-behavior: auto; }
+}
+
+@media (prefers-contrast: more) {
+  :root { --linha: rgb(26 25 23 / .3); --linha-forte: rgb(26 25 23 / .55); --tinta-3: #6b675f; }
+  @media (prefers-color-scheme: dark) {
+    :root { --linha: rgb(255 255 255 / .3); --linha-forte: rgb(255 255 255 / .55); --tinta-3: #98938b; }
+  }
+}

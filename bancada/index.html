@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bancada</title>
+<meta name="description" content="O custo real de fabricar uma peça impressa, e o preço que ela precisa ter.">
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f4f3f0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131211" media="(prefers-color-scheme: dark)">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bancada">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<link rel="icon" href="icones/icone-192.png" sizes="192x192">
+
+<link rel="preload" href="fontes/geist-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+<!-- ====================================================== cimeira ======= -->
+<header class="cimeira" id="cimeira">
+  <div class="cimeira-corpo">
+    <div>
+      <span class="preco" id="preco"><span class="preco-cifra">R$</span>0,00</span>
+      <div class="preco-nota" id="precoNota">uma peça</div>
+    </div>
+    <div class="cimeira-acoes">
+      <button class="btn btn-icone" id="abrirSalvos" aria-label="Cálculos salvos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h10"/>
+        </svg>
+      </button>
+      <button class="btn btn-icone" id="abrirAjustes" aria-label="Ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" aria-hidden="true">
+          <path d="M4 7h16M4 12h16M4 17h16"/>
+          <circle cx="9" cy="7" r="2.2" fill="var(--campo)"/>
+          <circle cx="15" cy="12" r="2.2" fill="var(--campo)"/>
+          <circle cx="8" cy="17" r="2.2" fill="var(--campo)"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="folha">
+
+  <!-- =================================================== filamento ====== -->
+  <section class="secao" aria-labelledby="tFilamento">
+    <div class="secao-titulo">
+      <h2 id="tFilamento">Filamento</h2>
+      <button class="acao" id="editarFilamentos" type="button">Editar</button>
+    </div>
+    <div class="trilho" id="trilho" role="listbox" aria-label="Filamento em uso"></div>
+  </section>
+
+  <!-- =================================================== a placa ======== -->
+  <section class="secao" aria-labelledby="tPlaca">
+    <div class="secao-titulo"><h2 id="tPlaca">A placa</h2></div>
+
+    <div class="malha">
+      <div class="celula">
+        <label for="gramas">Gramas</label>
+        <div class="celula-valor">
+          <input type="number" id="gramas" value="45" min="0" step="1"
+                 inputmode="decimal" enterkeyhint="done" autocomplete="off">
+          <span class="celula-un">g</span>
+        </div>
+        <div class="celula-dica" id="dicaGramas"></div>
+      </div>
+
+      <div class="celula">
+        <label for="tempo">Tempo</label>
+        <button type="button" class="celula-botao" id="tempo">3<small>h</small> 30<small>min</small></button>
+        <div class="celula-dica">de impressão</div>
+      </div>
+
+      <div class="celula">
+        <label for="naMesa">Cabem na mesa</label>
+        <div class="celula-valor">
+          <input type="number" id="naMesa" value="1" min="1" step="1"
+                 inputmode="numeric" enterkeyhint="done" autocomplete="off">
+          <span class="celula-un">un</span>
+        </div>
+        <div class="celula-dica">por impressão</div>
+      </div>
+
+      <div class="celula">
+        <label for="pedido">O cliente quer</label>
+        <div class="celula-valor">
+          <input type="number" id="pedido" value="1" min="1" step="1"
+                 inputmode="numeric" enterkeyhint="done" autocomplete="off">
+          <span class="celula-un">un</span>
+        </div>
+        <div class="celula-dica" id="dicaPedido"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================================================== o preço ======== -->
+  <section class="secao" aria-labelledby="tPreco">
+    <div class="secao-titulo"><h2 id="tPreco">O preço</h2></div>
+
+    <div class="regua" id="reguaMargem">
+      <div class="regua-topo">
+        <span class="regua-nome">Margem</span>
+        <span class="regua-valor num" data-valor>40%</span>
+      </div>
+      <div class="regua-pista" role="slider" tabindex="0" aria-label="Margem de lucro"
+           aria-valuemin="0" aria-valuemax="90" aria-valuenow="40" aria-valuetext="40 por cento">
+        <div class="regua-fundo"><div class="regua-cheio" data-cheio></div></div>
+        <div class="regua-pino" data-pino></div>
+      </div>
+      <div class="regua-marcas"><span>0%</span><span>45%</span><span>90%</span></div>
+    </div>
+
+    <div class="regua" id="reguaDesconto">
+      <div class="regua-topo">
+        <span class="regua-nome">Desconto</span>
+        <span class="regua-valor num" data-valor>0%</span>
+      </div>
+      <div class="regua-pista" role="slider" tabindex="0" aria-label="Desconto"
+           aria-valuemin="0" aria-valuemax="60" aria-valuenow="0" aria-valuetext="0 por cento">
+        <div class="regua-fundo"><div class="regua-cheio" data-cheio></div></div>
+        <div class="regua-pino" data-pino></div>
+      </div>
+      <div class="regua-marcas"><span>0%</span><span>30%</span><span>60%</span></div>
+    </div>
+  </section>
+
+  <!-- =================================================== o pedido ======= -->
+  <section class="secao" aria-labelledby="tPedido">
+    <div class="secao-titulo"><h2 id="tPedido">O pedido</h2></div>
+    <dl class="painel">
+      <div><dt>Total</dt><dd class="num" id="pedTotal">R$ 0,00</dd></div>
+      <div><dt>Placas</dt><dd class="num" id="pedPlacas">1</dd></div>
+      <div><dt>Lucro/hora</dt><dd class="num" id="pedHora">R$ 0,00</dd></div>
+    </dl>
+    <div class="aviso" id="avisoPedido" hidden></div>
+  </section>
+
+  <!-- =================================================== extrato ======== -->
+  <section class="secao" aria-labelledby="tExtrato">
+    <div class="secao-titulo">
+      <h2 id="tExtrato">De onde vem o preço</h2>
+      <span class="rotulo num" id="multiplicador"></span>
+    </div>
+    <div class="barra" id="barra" aria-hidden="true"></div>
+    <div class="extrato" id="extrato"></div>
+    <div class="aviso" id="avisoMargem" hidden></div>
+    <p class="nota">
+      Fora da conta: o tempo de anunciar, fotografar e atender. Se você vende com
+      frequência, some isso à margem.
+    </p>
+  </section>
+
+</main>
+
+<!-- ================================================== ações fixas ======= -->
+<div class="acoes-fixas">
+  <div class="acoes-corpo">
+    <button class="btn btn-vazado" id="salvar" type="button">Salvar</button>
+    <button class="btn btn-solido" id="compartilhar" type="button">Compartilhar</button>
+  </div>
+</div>
+
+<!-- ================================================== gaveta: tempo ===== -->
+<div class="cortina" data-cortina="tempo"></div>
+<section class="gaveta" data-gaveta="tempo" role="dialog" aria-modal="true" aria-labelledby="tTempo">
+  <div class="gaveta-alca" data-alca></div>
+  <div class="gaveta-topo">
+    <h2 id="tTempo">Tempo de impressão</h2>
+    <button class="btn btn-icone" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="gaveta-corpo">
+    <div class="roletas">
+      <ul class="roleta" id="roletaH" role="listbox" aria-label="Horas" tabindex="0"></ul>
+      <ul class="roleta" id="roletaM" role="listbox" aria-label="Minutos" tabindex="0"></ul>
+    </div>
+    <p class="nota" style="text-align:center">
+      O tempo da placa inteira, como o fatiador mostra.
+    </p>
+    <button class="btn btn-solido btn-largo" data-fechar type="button" style="margin-top:16px">Pronto</button>
+  </div>
+</section>
+
+<!-- ================================================== gaveta: filamentos = -->
+<div class="cortina" data-cortina="filamentos"></div>
+<section class="gaveta" data-gaveta="filamentos" role="dialog" aria-modal="true" aria-labelledby="tFilEd">
+  <div class="gaveta-alca" data-alca></div>
+  <div class="gaveta-topo">
+    <h2 id="tFilEd">Filamentos</h2>
+    <button class="btn btn-icone" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="gaveta-corpo">
+    <div class="pilha" id="listaFilamentos"></div>
+    <p class="nota">
+      O preço é o do quilo fechado, como você compra. O que estiver em uso não
+      pode ser removido enquanto for o último da lista.
+    </p>
+    <button class="btn btn-vazado btn-largo" id="novoFilamento" type="button" style="margin-top:14px">
+      Adicionar filamento
+    </button>
+  </div>
+</section>
+
+<!-- ================================================== gaveta: ajustes ==== -->
+<div class="cortina" data-cortina="ajustes"></div>
+<section class="gaveta" data-gaveta="ajustes" role="dialog" aria-modal="true" aria-labelledby="tAjustes">
+  <div class="gaveta-alca" data-alca></div>
+  <div class="gaveta-topo">
+    <h2 id="tAjustes">Ajustes</h2>
+    <button class="btn btn-icone" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="gaveta-corpo">
+
+    <div class="grupo">
+      <h3>Impressora</h3>
+      <div class="pilha">
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Potência média</span>
+            <span class="item-sub">o que ela puxa imprimindo</span></span>
+          <input type="number" id="potencia" min="0" step="5" inputmode="decimal">
+          <span class="item-un">W</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Depreciação</span>
+            <span class="item-sub" id="subDeprec">a máquina se gastando</span></span>
+          <input type="number" id="deprecHora" min="0" step="0.01" inputmode="decimal">
+          <span class="item-un">/h</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Manutenção</span>
+            <span class="item-sub">bico, correia, placa de vidro</span></span>
+          <input type="number" id="manutHora" min="0" step="0.01" inputmode="decimal">
+          <span class="item-un">/h</span>
+        </label>
+      </div>
+      <div class="pilha" style="margin-top:9px">
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Custo da impressora</span></span>
+          <input type="number" id="valorImpressora" min="0" step="50" inputmode="decimal">
+          <span class="item-un">R$</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Vida útil estimada</span>
+            <span class="item-sub" id="subVida"></span></span>
+          <input type="number" id="vidaUtil" min="1" step="100" inputmode="decimal">
+          <span class="item-un">h</span>
+        </label>
+        <button class="item item-botao" id="aplicarDeprec" type="button">
+          <span class="item-texto"><span class="item-nome">Usar como depreciação</span>
+            <span class="item-sub" id="subCalculo"></span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="grupo">
+      <h3>Energia</h3>
+      <div class="pilha">
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Tarifa</span>
+            <span class="item-sub">o valor do kWh na sua conta</span></span>
+          <input type="number" id="tarifa" min="0" step="0.001" inputmode="decimal">
+          <span class="item-un">/kWh</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="grupo">
+      <h3>Seu trabalho</h3>
+      <div class="pilha">
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Acabamento</span>
+            <span class="item-sub">por peça: tirar suporte, lixar, montar</span></span>
+          <input type="number" id="acabamento" min="0" step="1" inputmode="decimal">
+          <span class="item-un">min</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Sua hora</span>
+            <span class="item-sub">quanto vale o seu tempo</span></span>
+          <input type="number" id="valorHora" min="0" step="1" inputmode="decimal">
+          <span class="item-un">/h</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Reserva para falhas</span>
+            <span class="item-sub" id="subFalhas"></span></span>
+          <input type="number" id="falhas" min="0" max="90" step="1" inputmode="decimal">
+          <span class="item-un">%</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="grupo">
+      <h3>Vender</h3>
+      <div class="pilha">
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Embalagem</span>
+            <span class="item-sub">caixa, plástico bolha, etiqueta</span></span>
+          <input type="number" id="embalagem" min="0" step="0.5" inputmode="decimal">
+          <span class="item-un">R$</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Frete que você paga</span>
+            <span class="item-sub">zero se o cliente paga o envio</span></span>
+          <input type="number" id="frete" min="0" step="1" inputmode="decimal">
+          <span class="item-un">R$</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Taxa da plataforma</span>
+            <span class="item-sub">Shopee, Mercado Livre, Elo7</span></span>
+          <input type="number" id="taxaVenda" min="0" max="60" step="1" inputmode="decimal">
+          <span class="item-un">%</span>
+        </label>
+        <label class="item">
+          <span class="item-texto"><span class="item-nome">Imposto</span>
+            <span class="item-sub">sobre o que entra; deixe zero se não emite</span></span>
+          <input type="number" id="imposto" min="0" max="40" step="0.5" inputmode="decimal">
+          <span class="item-un">%</span>
+        </label>
+      </div>
+      <p class="nota" id="notaSoma"></p>
+    </div>
+
+    <div class="grupo">
+      <h3>O aparelho</h3>
+      <div class="pilha">
+        <button class="item item-botao" id="restaurar" type="button">
+          <span class="item-texto"><span class="item-nome">Restaurar padrões</span>
+            <span class="item-sub">devolve todo ajuste ao valor de fábrica</span></span>
+        </button>
+      </div>
+      <p class="nota" id="notaVersao"></p>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================================================== gaveta: salvar ==== -->
+<div class="cortina" data-cortina="salvar"></div>
+<section class="gaveta" data-gaveta="salvar" role="dialog" aria-modal="true" aria-labelledby="tSalvar">
+  <div class="gaveta-alca" data-alca></div>
+  <div class="gaveta-topo">
+    <h2 id="tSalvar">Salvar cálculo</h2>
+    <button class="btn btn-icone" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="gaveta-corpo">
+    <div class="pilha">
+      <label class="item">
+        <span class="item-texto"><span class="item-nome">Nome</span></span>
+        <input type="text" id="nomeSalvar" placeholder="Suporte de fone" maxlength="60"
+               autocomplete="off" enterkeyhint="done"
+               style="width:200px;text-align:right">
+      </label>
+    </div>
+    <p class="nota" id="resumoSalvar"></p>
+    <button class="btn btn-solido btn-largo" id="confirmaSalvar" type="button"
+            style="margin-top:14px">Salvar</button>
+  </div>
+</section>
+
+<!-- ================================================== gaveta: salvos ==== -->
+<div class="cortina" data-cortina="salvos"></div>
+<section class="gaveta" data-gaveta="salvos" role="dialog" aria-modal="true" aria-labelledby="tSalvos">
+  <div class="gaveta-alca" data-alca></div>
+  <div class="gaveta-topo">
+    <h2 id="tSalvos">Cálculos salvos</h2>
+    <button class="btn btn-icone" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="gaveta-corpo">
+    <div class="pilha" style="margin-bottom:16px">
+      <button class="item item-botao" id="linhaConta" type="button">
+        <span class="item-texto">
+          <span class="item-nome" id="contaNome">Só neste aparelho</span>
+          <span class="item-sub" id="contaSub">Entre para sincronizar com o celular</span>
+        </span>
+      </button>
+    </div>
+    <div class="pilha" id="listaSalvos"></div>
+  </div>
+</section>
+
+<!-- ================================================== gaveta: conta ===== -->
+<div class="cortina" data-cortina="conta"></div>
+<section class="gaveta" data-gaveta="conta" role="dialog" aria-modal="true" aria-labelledby="tConta">
+  <div class="gaveta-alca" data-alca></div>
+  <div class="gaveta-topo">
+    <h2 id="tConta">Entrar</h2>
+    <button class="btn btn-icone" data-fechar aria-label="Fechar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="gaveta-corpo">
+    <div class="pilha">
+      <label class="item">
+        <span class="item-texto"><span class="item-nome">E-mail</span></span>
+        <input type="email" id="cEmail" autocomplete="username" inputmode="email"
+               placeholder="voce@exemplo.com" style="width:190px;text-align:right">
+      </label>
+      <label class="item">
+        <span class="item-texto"><span class="item-nome">Senha</span></span>
+        <input type="password" id="cSenha" autocomplete="current-password"
+               placeholder="mínimo 8 letras" style="width:190px;text-align:right">
+      </label>
+    </div>
+    <p class="nota" id="contaAviso"></p>
+    <button class="btn btn-solido btn-largo" id="fazEntrar" type="button"
+            style="margin-top:14px">Entrar</button>
+    <button class="btn btn-vazado btn-largo" id="fazCriar" type="button"
+            style="margin-top:9px">Criar conta</button>
+    <p class="nota">
+      Os cálculos salvos passam a acompanhar você entre o computador e o
+      celular. Os ajustes continuam sendo de cada aparelho.
+    </p>
+  </div>
+</section>
+
+<!-- ================================================== tarja ============= -->
+<div class="tarja" id="tarja" role="status">
+  <span>Tem uma versão nova.</span>
+  <button type="button" id="recarregar">Atualizar</button>
+</div>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
