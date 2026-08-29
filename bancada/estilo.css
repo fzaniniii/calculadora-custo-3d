@@ -127,6 +127,12 @@
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--papel);
+  /* "manipulation" mata o zoom do toque duplo, que é a coisa que mais
+     denuncia uma página fingindo de app, e mantém rolagem e pinça. A pinça
+     fica de propósito: quem precisa ampliar para enxergar não pode ser
+     impedido por gosto meu de acabamento. */
+  touch-action: manipulation;
+  overscroll-behavior: none;
 }
 
 body {
@@ -138,11 +144,21 @@ body {
   background: var(--papel);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  overscroll-behavior-y: none;
-  /* Nada de seleção acidental de texto no meio de um arrasto. */
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  /* Nada de seleção acidental de texto no meio de um arrasto, e nada do
+     menu de copiar/consultar no toque longo: app não faz isso. */
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Campo de texto é a exceção: ali selecionar e colar tem que funcionar. */
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 input, button, select, textarea {
@@ -828,8 +844,12 @@ input, button, select, textarea {
 .item-nome { font-size: 15px; display: block; }
 .item-sub { font-size: 11.5px; color: var(--tinta-3); display: block; margin-top: 1px; }
 
+/* Todos os tipos, e nunca abaixo de 16px: o iOS dá zoom sozinho ao focar um
+   campo com letra menor que isso, e a tela inteira salta. */
 .item input[type="number"],
-.item input[type="text"] {
+.item input[type="text"],
+.item input[type="email"],
+.item input[type="password"] {
   -webkit-appearance: none;
   appearance: none;
   border: 0;
