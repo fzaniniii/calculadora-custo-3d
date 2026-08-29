@@ -386,20 +386,22 @@
     gap: 6px; font-style: normal; cursor: pointer;
   }
 
+  /* A cor de cada marca vem do valor dela (vermelho = margem magra,
+     verde = folgada) e é aplicada por JS. Aqui ficam só as formas. */
   .dial-scroll .t {
     width: 2px; height: 13px; border-radius: 1px;
-    background: var(--label-3);
+    background: var(--label-3); opacity: 0.55;
   }
 
-  .dial-scroll .maior .t { height: 21px; background: var(--label-2); }
-  .dial-scroll .sel .t { background: var(--accent); height: 21px; }
+  .dial-scroll .maior .t { height: 21px; opacity: 0.85; }
+  .dial-scroll .sel .t { height: 23px; width: 3px; opacity: 1; }
 
   .dial-scroll .n {
     font-size: 11px; height: 13px; line-height: 13px;
     color: var(--label-2); font-variant-numeric: tabular-nums;
   }
 
-  .dial-scroll .sel .n { color: var(--accent); font-weight: 700; }
+  .dial-scroll .sel .n { font-weight: 700; }
 
   /* ---------- Botão de ajuda ---------- */
 
@@ -673,6 +675,12 @@
     padding: 15px 12px 6px; min-height: 44px; cursor: pointer;
   }
 
+  .haptico {
+    position: fixed; left: -50px; top: 0;
+    width: 1px; height: 1px; overflow: hidden;
+    opacity: 0.01; z-index: -1;
+  }
+
   /* ---------- Aviso de versão ---------- */
 
   .atualizar {
@@ -933,6 +941,13 @@
 
 </div>
 </main>
+
+<!-- Truque do iOS 17.4+: alternar um checkbox "switch" gera toque háptico.
+     Fica fora da tela e fora da navegação; some se o iOS não suportar. -->
+<span class="haptico" aria-hidden="true">
+  <input type="checkbox" switch id="hapticSwitch" tabindex="-1">
+  <label for="hapticSwitch" id="hapticLabel"></label>
+</span>
 
 <div class="atualizar" id="aviso" hidden>
   <span>Nova versão disponível</span>
@@ -1476,23 +1491,80 @@
      (v - min) * 34. Os espaçadores das pontas deixam o primeiro e o
      último chegarem ao centro. */
 
+  /* ---- Retorno tátil ----
+     O iPhone não tem navigator.vibrate: a API de vibração nunca foi
+     implementada no Safari. O que existe é um efeito colateral do iOS
+     17.4+, em que alternar um checkbox com o atributo `switch` produz
+     um toque háptico. Usamos o que houver e seguimos em silêncio se
+     nenhum dos dois existir. */
+  var haptico = (function () {
+    var rotulo = document.getElementById("hapticLabel");
+    var ultimo = 0;
+    var temVibrate = typeof navigator.vibrate === "function";
+
+    return function () {
+      var agora = Date.now();
+      if (agora - ultimo < 25) return;   /* não dispara em rajada */
+      ultimo = agora;
+
+      if (temVibrate) { try { navigator.vibrate(8); return; } catch (e) {} }
+      if (rotulo) { try { rotulo.click(); } catch (e) {} }
+    };
+  })();
+
   var MARCA = 34;
 
-  function criaDial(idBox, min, max, aoMudar) {
+  /* Interpola entre paradas de cor: [[valor, [r,g,b]], ...] */
+  function rampa(paradas, v) {
+    if (v <= paradas[0][0]) return paradas[0][1];
+    for (var i = 1; i < paradas.length; i++) {
+      if (v <= paradas[i][0]) {
+        var a = paradas[i - 1], b = paradas[i];
+        var t = (v - a[0]) / (b[0] - a[0]);
+        return [0, 1, 2].map(function (k) {
+          return Math.round(a[1][k] + (b[1][k] - a[1][k]) * t);
+        });
+      }
+    }
+    return paradas[paradas.length - 1][1];
+  }
+
+  var rgb = function (c) { return "rgb(" + c[0] + "," + c[1] + "," + c[2] + ")"; };
+
+  /* Margem: magra é vermelha, folgada é verde. */
+  var CORES_MARGEM = [
+    [0,  [255, 59, 48]],
+    [20, [255, 149, 0]],
+    [40, [52, 199, 89]],
+    [90, [48, 209, 88]]
+  ];
+
+  /* Desconto: neutro em zero, esquenta conforme come o lucro. */
+  var CORES_DESCONTO = [
+    [0,  [142, 142, 147]],
+    [15, [255, 149, 0]],
+    [35, [255, 59, 48]],
+    [50, [255, 59, 48]]
+  ];
+
+  function criaDial(idBox, min, max, aoMudar, cores) {
     var scroll = document.querySelector("#" + idBox + " .dial-scroll");
     var html = '<span class="esp" style="width:calc(50% - 17px)"></span>';
 
     for (var v = min; v <= max; v++) {
       var maior = v % 10 === 0;
+      var cor = cores ? rgb(rampa(cores, v)) : "";
       html += '<i data-v="' + v + '" class="' + (maior ? "maior" : "") + '">' +
-              '<span class="t"></span>' +
-              '<span class="n">' + (v % 5 === 0 ? v : "") + '</span></i>';
+              '<span class="t"' + (cor ? ' style="background:' + cor + '"' : "") + '></span>' +
+              '<span class="n"' + (cor && v % 5 === 0 ? ' style="color:' + cor + '"' : "") + '>' +
+              (v % 5 === 0 ? v : "") + '</span></i>';
     }
 
     html += '<span class="esp" style="width:calc(50% - 17px)"></span>';
     scroll.innerHTML = html;
 
     var itens = scroll.querySelectorAll("i[data-v]");
+    var cursor = document.querySelector("#" + idBox + " .dial-cursor");
     var proprio = false;   /* rolagem disparada por nós, não pelo dedo */
 
     function indice() {
@@ -1505,12 +1577,21 @@
         var s = k === i;
         if (itens[k].classList.contains("sel") !== s) itens[k].classList.toggle("sel", s);
       }
+      if (cores) cursor.style.background = rgb(rampa(cores, min + i));
       scroll.setAttribute("aria-valuenow", String(min + i));
       return min + i;
     }
 
-    var t;
+    var t, ultimoI = -1;
     scroll.addEventListener("scroll", function () {
+      /* fora do debounce: marca e vibra a cada dente cruzado, para a
+         régua ter cara de catraca em vez de deslizar liso */
+      var i = indice();
+      if (i !== ultimoI) {
+        ultimoI = i;
+        marca();
+        if (!proprio) haptico();
+      }
       clearTimeout(t);
       t = setTimeout(function () {
         var v = marca();
@@ -1549,12 +1630,12 @@
   dialMargem = criaDial("dialMargem", 0, 90, function (v) {
     el.margem.value = String(v);
     calc();
-  });
+  }, CORES_MARGEM);
 
   dialDesconto = criaDial("dialDesconto", 0, 50, function (v) {
     el.desconto.value = String(v);
     calc();
-  });
+  }, CORES_DESCONTO);
 
   /* ---- Ajuda: os textos longos saem da tela e ficam atrás do "?" ---- */
 
