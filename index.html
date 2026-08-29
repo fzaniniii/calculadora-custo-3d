@@ -1297,6 +1297,13 @@
 
     if (dialMargem) dialMargem.set(num("margem", 0));
     if (dialDesconto) dialDesconto.set(num("desconto", 0));
+
+    /* A cor da catraca chega ao número: margem e multiplicador seguem a
+       saúde da margem, o desconto segue o quanto ele morde o lucro. */
+    var corM = rgb(rampa(CORES_MARGEM, num("margem", 0)));
+    el.margem.style.color = corM;
+    if (multEl) multEl.style.color = corM;
+    el.desconto.style.color = rgb(rampa(CORES_DESCONTO, num("desconto", 0)));
   }
 
   ids.forEach(function (id) {
@@ -1539,11 +1546,13 @@
     [90, [48, 209, 88]]
   ];
 
-  /* Desconto: neutro em zero, esquenta conforme come o lucro. */
+  /* Desconto: começa no laranja dos campos editáveis e esquenta conforme
+     come o lucro. Não começa em cinza de propósito — cinza num campo
+     parece desativado. */
   var CORES_DESCONTO = [
-    [0,  [142, 142, 147]],
-    [15, [255, 149, 0]],
-    [35, [255, 59, 48]],
+    [0,  [255, 149, 0]],
+    [20, [255, 105, 30]],
+    [40, [255, 59, 48]],
     [50, [255, 59, 48]]
   ];
 
