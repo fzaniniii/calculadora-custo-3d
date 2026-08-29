@@ -560,11 +560,13 @@
   .saved-body { flex: 1; min-width: 0; }
 
   .saved-name {
+    display: block;
     font-size: 16px; font-weight: 500;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
   .saved-meta {
+    display: block;
     font-size: 12.5px; color: var(--label-2); margin-top: 2px;
     font-variant-numeric: tabular-nums;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -601,8 +603,8 @@
   button.conta-row { cursor: pointer; }
   button.conta-row:active { background: var(--fill); }
   .conta-row .body { flex: 1; min-width: 0; }
-  .conta-row .mail { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .conta-row .estado { font-size: 12.5px; color: var(--label-2); margin-top: 2px; }
+  .conta-row .mail { display: block; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conta-row .estado { display: block; font-size: 12.5px; color: var(--label-2); margin-top: 2px; }
   .conta-row .estado.ruim { color: var(--c-manut); }
   .conta-row .chev { color: var(--label-3); font-size: 19px; flex: none; }
   .conta-row.sair { color: var(--c-manut); justify-content: center; }
