@@ -641,6 +641,9 @@
     max-height: 92%; overflow-y: auto;
   }
 
+  .sheet.alta { max-height: 94%; }
+  .sheet.alta .sec-head:first-of-type { padding-top: 4px; }
+
   @keyframes fade { from { opacity: 0; } }
   @keyframes rise { from { transform: translateY(100%); } }
 
@@ -765,6 +768,57 @@
   <div class="rel" id="relatorio"></div>
   <p class="rel-rodape" id="relRodape"></p>
 
+
+  <div class="sec-head">
+    <span>Desconto pro cliente</span>
+    <button type="button" class="sec-help" data-ajuda="desconto" aria-label="Como o desconto afeta seu lucro">?</button>
+  </div>
+  <div class="boxes b1">
+    <label class="box">
+      <span class="box-label">Desconto</span>
+      <input type="number" id="desconto" value="0" min="0" max="90" step="1" inputmode="decimal">
+      <span class="box-unit">% sobre o preço final</span>
+    </label>
+  </div>
+  <div class="dial" id="dialDesconto">
+    <div class="dial-cursor"></div>
+    <div class="dial-scroll" role="slider" aria-label="Desconto"
+         aria-valuemin="0" aria-valuemax="50" tabindex="0"></div>
+  </div>
+
+  <div class="group">
+    <button type="button" class="row disclosure" id="abrirAjustes" aria-expanded="false">
+      <span class="row-label">Ajustes
+        <span class="row-hint">Filamento, máquina, seu trabalho, margem e taxa</span></span>
+      <span class="chev">›</span>
+    </button>
+  </div>
+
+  <!-- ============ SALVOS ============ -->
+  <div class="sec-head">
+    <span>Salvos</span>
+    <button type="button" class="sec-btn" id="btnEditar" hidden>Editar</button>
+  </div>
+  <div class="group" id="listaSalvos"></div>
+
+
+  <footer>Custo 3D · valores em BRL</footer>
+
+</div>
+</main>
+
+<div class="atualizar" id="aviso" hidden>
+  <span>Nova versão disponível</span>
+  <button type="button" id="avisoBtn">Atualizar</button>
+</div>
+
+
+<!-- ============ FOLHA: AJUSTES ============ -->
+<div class="sheet-wrap" id="sheetAjustes" hidden>
+  <div class="backdrop" id="ajustesBackdrop"></div>
+  <div class="sheet alta" role="dialog" aria-modal="true" aria-labelledby="ajustesTitulo">
+    <div class="grabber"></div>
+    <h2 id="ajustesTitulo">Ajustes</h2>
   <!-- ============ AJUSTES DE CUSTO ============ -->
   <div class="sec-head">
     <span>Quanto custa produzir</span>
@@ -898,31 +952,6 @@
       <span class="box-nota">Shopee, Mercado Livre, maquininha</span>
     </label>
   </div>
-
-  <div class="sec-head">
-    <span>Desconto pro cliente</span>
-    <button type="button" class="sec-help" data-ajuda="desconto" aria-label="Como o desconto afeta seu lucro">?</button>
-  </div>
-  <div class="boxes b1">
-    <label class="box">
-      <span class="box-label">Desconto</span>
-      <input type="number" id="desconto" value="0" min="0" max="90" step="1" inputmode="decimal">
-      <span class="box-unit">% sobre o preço final</span>
-    </label>
-  </div>
-  <div class="dial" id="dialDesconto">
-    <div class="dial-cursor"></div>
-    <div class="dial-scroll" role="slider" aria-label="Desconto"
-         aria-valuemin="0" aria-valuemax="50" tabindex="0"></div>
-  </div>
-
-  <!-- ============ SALVOS ============ -->
-  <div class="sec-head">
-    <span>Salvos</span>
-    <button type="button" class="sec-btn" id="btnEditar" hidden>Editar</button>
-  </div>
-  <div class="group" id="listaSalvos"></div>
-
   <!-- ============ CONTA ============ -->
   <div class="sec-head">
     <span>Conta</span>
@@ -933,15 +962,10 @@
   <div class="group">
     <button type="button" class="btn-row" id="reset">Restaurar valores padrão</button>
   </div>
-
-  <footer>Custo 3D · valores em BRL</footer>
-
-</div>
-</main>
-
-<div class="atualizar" id="aviso" hidden>
-  <span>Nova versão disponível</span>
-  <button type="button" id="avisoBtn">Atualizar</button>
+    <div class="sheet-actions" style="margin-top:6px">
+      <button type="button" class="btn btn-main" id="ajustesPronto">Pronto</button>
+    </div>
+  </div>
 </div>
 
 <!-- ============ FOLHA: AJUDA ============ -->
@@ -1577,26 +1601,38 @@
       return min + i;
     }
 
+    /* A régua pode estar dentro de uma folha fechada. Escondida ela não
+       tem largura, o scrollLeft não gruda, e ao abrir o navegador dispara
+       um "scroll" fantasma na posição 0 — que já zerou a margem uma vez.
+       Por isso só rolagem vinda de dedo, roda ou teclado conta. */
+    var interagiu = false;
+    ["pointerdown", "touchstart", "wheel", "keydown"].forEach(function (ev) {
+      scroll.addEventListener(ev, function () { interagiu = true; }, { passive: true });
+    });
+
     var t, ultimoI = -1;
     scroll.addEventListener("scroll", function () {
+      if (!scroll.clientWidth) return;          /* ainda sem layout */
+
       /* fora do debounce: marca e vibra a cada dente cruzado, para a
          régua ter cara de catraca em vez de deslizar liso */
       var i = indice();
       if (i !== ultimoI) {
         ultimoI = i;
         marca();
-        if (!proprio) haptico();
+        if (interagiu && !proprio) haptico();
       }
       clearTimeout(t);
       t = setTimeout(function () {
         var v = marca();
-        if (!proprio) aoMudar(v);
+        if (interagiu && !proprio) aoMudar(v);
       }, 60);
     }, { passive: true });
 
     scroll.addEventListener("click", function (ev) {
       var it = ev.target.closest("i[data-v]");
       if (!it) return;
+      interagiu = true;
       scroll.scrollLeft = (parseInt(it.getAttribute("data-v"), 10) - min) * MARCA;
       aoMudar(marca());
     });
@@ -1717,6 +1753,25 @@
 
   document.getElementById("ajudaOk").addEventListener("click", fecharAjuda);
   document.getElementById("ajudaBackdrop").addEventListener("click", fecharAjuda);
+
+  /* ---- Folha de Ajustes ----
+     Tudo que se configura uma vez saiu da tela principal e mora aqui.
+     A régua da margem vive dentro dela, e régua escondida não tem largura
+     para rolar — por isso reposicionamos depois de abrir. */
+
+  var sheetAjustes = document.getElementById("sheetAjustes");
+
+  function abrirAjustes() {
+    sheetAjustes.hidden = false;
+    void sheetAjustes.offsetHeight;
+    if (dialMargem) dialMargem.set(num("margem", 0));
+  }
+
+  function fecharAjustes() { sheetAjustes.hidden = true; }
+
+  document.getElementById("abrirAjustes").addEventListener("click", abrirAjustes);
+  document.getElementById("ajustesPronto").addEventListener("click", fecharAjustes);
+  document.getElementById("ajustesBackdrop").addEventListener("click", fecharAjustes);
 
   /* ================= Cálculos salvos ================= */
 
@@ -2201,6 +2256,7 @@
     if (!sheetAuth.hidden) sheetAuth.hidden = true;
     if (!sheetTempo.hidden) fecharTempo();
     if (!sheetAjuda.hidden) fecharAjuda();
+    if (!sheetAjustes.hidden) fecharAjustes();
   });
 
   window.addEventListener("online", function () { sincronizar(); });
