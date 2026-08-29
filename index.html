@@ -510,6 +510,104 @@
     font-size: 12.5px; color: var(--label-2); line-height: 1.45;
   }
 
+
+  /* ---------- Painel de resultado ---------- */
+
+  .painel {
+    background: linear-gradient(160deg, #10241d 0%, #0b1a16 60%, #0e1f1a 100%);
+    border-radius: 18px; padding: 20px 18px 18px;
+    margin-bottom: 22px; color: #fff;
+  }
+
+  .painel-cap {
+    display: block; font-size: 11.5px; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase;
+    color: rgba(235,245,240,0.55);
+  }
+
+  .painel-valor {
+    display: block; font-size: 46px; font-weight: 700;
+    letter-spacing: -0.035em; line-height: 1.03;
+    font-variant-numeric: tabular-nums; color: #fff; margin: 4px 0 4px;
+  }
+
+  .painel-sub { display: block; font-size: 13.5px; color: rgba(235,245,240,0.6); font-variant-numeric: tabular-nums; }
+  .painel-sub b { color: #fff; font-weight: 600; }
+
+  .bl {
+    background: rgba(255,255,255,0.06); border-radius: 12px;
+    padding: 11px 13px 13px; margin: 16px 0 12px;
+  }
+
+  .bl-topo {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 12.5px; color: rgba(235,245,240,0.6); margin-bottom: 9px;
+  }
+
+  .bl-topo span:last-child { color: #34c759; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .bl-trilho {
+    display: block; height: 8px; border-radius: 5px;
+    background: rgba(255,255,255,0.16); overflow: hidden;
+  }
+
+  .bl-lucro {
+    display: block; height: 100%; border-radius: 5px;
+    background: #34c759; margin-left: auto;
+    transition: width 0.25s cubic-bezier(0.32,0.72,0,1);
+  }
+
+  .cartoes { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+  .cartao {
+    background: rgba(255,255,255,0.06); border-radius: 12px;
+    padding: 11px 12px 12px; min-width: 0;
+  }
+
+  .cartao .k { display: block; font-size: 11.5px; color: rgba(235,245,240,0.55); }
+  .cartao .v {
+    display: block; font-size: 19px; font-weight: 700; margin-top: 3px;
+    font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .painel-nota {
+    margin: 13px 0 0; padding: 11px 13px;
+    background: rgba(52,199,89,0.12); border-radius: 11px;
+    font-size: 13px; line-height: 1.45; color: rgba(235,245,240,0.85);
+  }
+
+  .painel-nota b { color: #34c759; font-weight: 700; }
+  .painel-nota s { color: rgba(235,245,240,0.5); }
+
+  /* ---------- Cenários ---------- */
+
+  .cenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 22px; }
+
+  .cenarios button {
+    appearance: none; border: 1px solid var(--sep); background: var(--card);
+    color: var(--label); font: inherit; font-size: 15px; font-weight: 600;
+    border-radius: 12px; padding: 12px 12px 11px; text-align: left;
+    cursor: pointer; min-height: 58px; min-width: 0;
+  }
+
+  .cenarios button small {
+    display: block; font-size: 11.5px; font-weight: 400;
+    color: var(--label-2); margin-top: 2px;
+  }
+
+  .cenarios button:active { background: var(--fill); }
+  .cenarios button[aria-pressed="true"] { border-color: var(--accent); }
+
+  /* ---------- Barras no detalhamento ---------- */
+
+  .rel-l .barra {
+    display: block; height: 4px; border-radius: 3px;
+    background: var(--fill); overflow: hidden; margin-top: 5px;
+  }
+
+  .rel-l .barra span { display: block; height: 100%; border-radius: 3px; }
+
   /* ---------- Recolhíveis ---------- */
 
   .disclosure {
@@ -705,6 +803,9 @@
   }
 
   @media (max-width: 360px) {
+    .painel-valor { font-size: 38px; }
+    .cartao .v { font-size: 17px; }
+    .cenarios button { font-size: 14px; }
     .hero-value { font-size: 38px; }
     .nav-title { font-size: 17px; }
     .boxes { gap: 7px; }
@@ -730,13 +831,38 @@
     <button type="button" class="nav-btn" id="btnNovo">Novo</button>
     <button type="button" class="nav-btn" id="btnSalvar">Salvar</button>
   </div>
-  <span class="hero-cap">Venda cada peça por</span>
-  <span class="hero-value" id="heroValue">R$ 0,00</span>
-  <span class="hero-sub" id="heroSub">&nbsp;</span>
 </header>
 
 <main>
 <div class="inner">
+
+  <div class="painel">
+    <span class="painel-cap">Preço sugerido</span>
+    <span class="painel-valor" id="heroValue">R$ 0,00</span>
+    <span class="painel-sub" id="heroSub">&nbsp;</span>
+
+    <div class="bl">
+      <div class="bl-topo"><span>Custo e lucro no preço</span><span id="blPct">—</span></div>
+      <div class="bl-trilho"><span class="bl-lucro" id="blLucro"></span></div>
+    </div>
+
+    <div class="cartoes">
+      <div class="cartao"><span class="k">Custo por peça</span><span class="v" id="cCusto">—</span></div>
+      <div class="cartao"><span class="k">Lucro por peça</span><span class="v" id="cLucro">—</span></div>
+      <div class="cartao"><span class="k">Tempo do job</span><span class="v" id="cTempo">—</span></div>
+      <div class="cartao"><span class="k">Só o filamento</span><span class="v" id="cFilamento">—</span></div>
+    </div>
+
+    <p class="painel-nota" id="painelNota"></p>
+  </div>
+
+  <div class="sec-head"><span>Comece por um cenário</span></div>
+  <div class="cenarios" id="cenarios">
+    <button type="button" data-c="chaveiro">Chaveiro<small>leve · rápido</small></button>
+    <button type="button" data-c="tecnica">Peça técnica<small>média · funcional</small></button>
+    <button type="button" data-c="miniatura">Miniatura<small>detalhe · lenta</small></button>
+    <button type="button" data-c="lote">Lote de 10<small>escala · acabamento</small></button>
+  </div>
 
   <div class="sec-head"><span>O que você vai imprimir</span></div>
   <div class="boxes">
@@ -1210,6 +1336,32 @@
 
     document.getElementById("tempoTexto").textContent = tempoTexto(horas);
 
+    /* Painel: os quatro números que importam, sem precisar abrir nada */
+    document.getElementById("cCusto").textContent = brl(custoReal);
+    document.getElementById("cLucro").textContent = brl(lucroFinal);
+    document.getElementById("cTempo").textContent = tempoTexto(horas);
+    document.getElementById("cFilamento").textContent = brl(material / qtd);
+
+    var pctLucro = precoFinal > 0 ? Math.max(0, (lucroFinal / precoFinal) * 100) : 0;
+    document.getElementById("blPct").textContent = nf(pctLucro, 0) + "% lucro";
+    document.getElementById("blLucro").style.width = Math.min(pctLucro, 100) + "%";
+
+    /* Duas frases que ninguém calcularia sozinho: quantas peças pagam a
+       impressora, e quanto sairia cobrando só o filamento. */
+    var notas = [];
+    var valorMaq = num("valorImpressora", 0);
+    if (lucroFinal > 0 && valorMaq > 0) {
+      notas.push("Com esse lucro, <b>" + nf(Math.ceil(valorMaq / lucroFinal), 0) +
+                 " peças</b> pagam sua impressora.");
+    }
+    var soFilamento = (material / qtd) / (1 - margem);
+    if (soFilamento > 0 && precoFinal > soFilamento * 1.05) {
+      notas.push("Cobrando só o filamento você pediria <s>" + brl(soFilamento) +
+                 "</s> — é o erro mais comum.");
+    }
+    document.getElementById("painelNota").innerHTML = notas.join("<br>");
+    document.getElementById("painelNota").hidden = !notas.length;
+
     ultimo = {
       total: fabJob, porPeca: fab, custoReal: custoReal, qtd: qtd, tempo: horas,
       preco: precoFinal, lucro: lucro, margem: margem * 100
@@ -1221,10 +1373,14 @@
     salvarCampos();
   }
 
-  function linha(cor, nome, sub, pct, valor) {
+  function linha(cor, nome, sub, pct, valor, frac) {
+    var barra = (cor && frac !== undefined)
+      ? '<span class="barra"><span style="width:' + Math.min(frac * 100, 100).toFixed(1) +
+        '%;background:var(' + cor + ')"></span></span>'
+      : "";
     return '<div class="rel-l">' +
       (cor ? '<span class="dot" style="background:var(' + cor + ')"></span>' : "") +
-      '<span class="nm">' + nome + (sub ? '<small>' + sub + '</small>' : "") + '</span>' +
+      '<span class="nm">' + nome + (sub ? '<small>' + sub + '</small>' : "") + barra + '</span>' +
       (pct !== null ? '<span class="pc">' + pct + '</span>' : "") +
       '<span class="vl">' + valor + '</span></div>';
   }
@@ -1236,15 +1392,16 @@
 
   function montaRelatorio(d) {
     var pc = function (v) { return d.fab > 0 ? nf((v / d.fab) * 100, 0) + "%" : "—"; };
+    var fr = function (v) { return d.fab > 0 ? v / d.fab : 0; };
 
     var html = "";
 
     html += '<div class="rel-bloco">' +
       '<div class="rel-tit">Custo de fabricar' + (d.qtd > 1 ? " — cada peça" : "") + '</div>' +
-      linha("--c-material", "Filamento", null, pc(d.material), brl(d.material)) +
-      linha("--c-energia", "Energia", null, pc(d.energia), brl(d.energia)) +
-      linha("--c-deprec", "Depreciação", null, pc(d.deprec), brl(d.deprec)) +
-      linha("--c-manut", "Manutenção", null, pc(d.manut), brl(d.manut)) +
+      linha("--c-material", "Filamento", null, pc(d.material), brl(d.material), fr(d.material)) +
+      linha("--c-energia", "Energia", null, pc(d.energia), brl(d.energia), fr(d.energia)) +
+      linha("--c-deprec", "Depreciação", null, pc(d.deprec), brl(d.deprec), fr(d.deprec)) +
+      linha("--c-manut", "Manutenção", null, pc(d.manut), brl(d.manut), fr(d.manut)) +
       soma("Custo de fabricar", brl(d.fab)) +
       '</div>';
 
@@ -1309,6 +1466,7 @@
       "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
       "/h máquina · " + nf(num("potencia", 0), 0) + " W · toque para ajustar";
 
+    marcaCenario();
     if (dialMargem) dialMargem.set(num("margem", 0));
     if (dialDesconto) dialDesconto.set(num("desconto", 0));
 
@@ -1896,6 +2054,35 @@
     editando = !editando;
     btnEditar.textContent = editando ? "Pronto" : "Editar";
     renderSalvos();
+  });
+
+  /* ---- Cenários ----
+     Pontos de partida para quem não sabe quanto pesa uma peça. Mexem só
+     no que descreve a impressão; preço do filamento, máquina e margem
+     continuam como você configurou. */
+
+  var CENARIOS = {
+    chaveiro:  { peso: "8",   tempoH: "0", tempoM: "25", qtd: "1",  acabamento: "3" },
+    tecnica:   { peso: "45",  tempoH: "3", tempoM: "30", qtd: "1",  acabamento: "10" },
+    miniatura: { peso: "25",  tempoH: "5", tempoM: "0",  qtd: "1",  acabamento: "15" },
+    lote:      { peso: "120", tempoH: "8", tempoM: "0",  qtd: "10", acabamento: "5" }
+  };
+
+  function marcaCenario() {
+    [].forEach.call(document.querySelectorAll("#cenarios button"), function (b) {
+      var c = CENARIOS[b.getAttribute("data-c")];
+      var igual = Object.keys(c).every(function (k) { return String(el[k].value) === c[k]; });
+      b.setAttribute("aria-pressed", igual ? "true" : "false");
+    });
+  }
+
+  document.getElementById("cenarios").addEventListener("click", function (ev) {
+    var b = ev.target.closest("[data-c]");
+    if (!b) return;
+    var c = CENARIOS[b.getAttribute("data-c")];
+    Object.keys(c).forEach(function (k) { el[k].value = c[k]; });
+    setAtivo(null);
+    calc();
   });
 
   /* Novo cálculo: zera só a peça, preserva os ajustes que você configurou. */

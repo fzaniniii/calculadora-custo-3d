@@ -1,4 +1,4 @@
-const CACHE_NAME = "calc3d-enxuto-1";
+const CACHE_NAME = "calc3d-enxuto-2";
 const ASSETS = [
   "/",
   "/index.html",
