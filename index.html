@@ -677,11 +677,6 @@
     padding: 15px 12px 6px; min-height: 44px; cursor: pointer;
   }
 
-  .haptico {
-    position: fixed; left: -50px; top: 0;
-    width: 1px; height: 1px; overflow: hidden;
-    opacity: 0.01; z-index: -1;
-  }
 
   /* ---------- Aviso de versão ---------- */
 
@@ -943,13 +938,6 @@
 
 </div>
 </main>
-
-<!-- Truque do iOS 17.4+: alternar um checkbox "switch" gera toque háptico.
-     Fica fora da tela e fora da navegação; some se o iOS não suportar. -->
-<span class="haptico" aria-hidden="true">
-  <input type="checkbox" switch id="hapticSwitch" tabindex="-1">
-  <label for="hapticSwitch" id="hapticLabel"></label>
-</span>
 
 <div class="atualizar" id="aviso" hidden>
   <span>Nova versão disponível</span>
@@ -1501,23 +1489,19 @@
      último chegarem ao centro. */
 
   /* ---- Retorno tátil ----
-     O iPhone não tem navigator.vibrate: a API de vibração nunca foi
-     implementada no Safari. O que existe é um efeito colateral do iOS
-     17.4+, em que alternar um checkbox com o atributo `switch` produz
-     um toque háptico. Usamos o que houver e seguimos em silêncio se
-     nenhum dos dois existir. */
+     Testado no iPhone: não funciona. O Safari não implementa
+     navigator.vibrate, e o truque do checkbox `switch` do iOS 17.4+ também
+     não deu retorno, então foi removido. Fica só a chamada padrão, que vale
+     em Android e desktop e não custa nada onde não existe. */
   var haptico = (function () {
-    var rotulo = document.getElementById("hapticLabel");
     var ultimo = 0;
-    var temVibrate = typeof navigator.vibrate === "function";
-
+    var tem = typeof navigator.vibrate === "function";
     return function () {
+      if (!tem) return;
       var agora = Date.now();
-      if (agora - ultimo < 25) return;   /* não dispara em rajada */
+      if (agora - ultimo < 25) return;
       ultimo = agora;
-
-      if (temVibrate) { try { navigator.vibrate(8); return; } catch (e) {} }
-      if (rotulo) { try { rotulo.click(); } catch (e) {} }
+      try { navigator.vibrate(8); } catch (e) {}
     };
   })();
 
