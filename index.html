@@ -353,6 +353,54 @@
 
   .seg button:active { opacity: 0.55; }
 
+  /* ---------- Engrenagem horizontal ---------- */
+
+  .dial {
+    position: relative; background: var(--card);
+    border-radius: 12px; padding: 11px 0 9px;
+    margin-bottom: 22px; overflow: hidden;
+  }
+
+  .dial-cursor {
+    position: absolute; left: 50%; top: 9px; bottom: 9px;
+    width: 2px; margin-left: -1px; z-index: 2;
+    background: var(--accent); border-radius: 2px; pointer-events: none;
+  }
+
+  .dial-scroll {
+    display: flex; overflow-x: scroll;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; -ms-overflow-style: none;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+    mask-image: linear-gradient(to right, transparent, #000 14%, #000 86%, transparent);
+  }
+
+  .dial-scroll::-webkit-scrollbar { display: none; }
+
+  .dial-scroll .esp { flex: none; }
+
+  .dial-scroll i {
+    flex: none; width: 34px; scroll-snap-align: center;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; font-style: normal; cursor: pointer;
+  }
+
+  .dial-scroll .t {
+    width: 2px; height: 13px; border-radius: 1px;
+    background: var(--label-3);
+  }
+
+  .dial-scroll .maior .t { height: 21px; background: var(--label-2); }
+  .dial-scroll .sel .t { background: var(--accent); height: 21px; }
+
+  .dial-scroll .n {
+    font-size: 11px; height: 13px; line-height: 13px;
+    color: var(--label-2); font-variant-numeric: tabular-nums;
+  }
+
+  .dial-scroll .sel .n { color: var(--accent); font-weight: 700; }
+
   /* ---------- Botão de ajuda ---------- */
 
   .sec-help {
@@ -827,11 +875,10 @@
     </label>
   </div>
 
-  <div class="seg" id="presetsMargem" role="group" aria-label="Margens comuns">
-    <button type="button" data-m="30">30%</button>
-    <button type="button" data-m="40">40%</button>
-    <button type="button" data-m="50">50%</button>
-    <button type="button" data-m="60">60%</button>
+  <div class="dial" id="dialMargem">
+    <div class="dial-cursor"></div>
+    <div class="dial-scroll" role="slider" aria-label="Margem de lucro"
+         aria-valuemin="0" aria-valuemax="90" tabindex="0"></div>
   </div>
 
   <div class="sec-head">
@@ -845,6 +892,23 @@
       <span class="box-unit">% — deixe 0 se vende direto</span>
       <span class="box-nota">Shopee, Mercado Livre, maquininha</span>
     </label>
+  </div>
+
+  <div class="sec-head">
+    <span>Desconto pro cliente</span>
+    <button type="button" class="sec-help" data-ajuda="desconto" aria-label="Como o desconto afeta seu lucro">?</button>
+  </div>
+  <div class="boxes b1">
+    <label class="box">
+      <span class="box-label">Desconto</span>
+      <input type="number" id="desconto" value="0" min="0" max="90" step="1" inputmode="decimal">
+      <span class="box-unit">% sobre o preço final</span>
+    </label>
+  </div>
+  <div class="dial" id="dialDesconto">
+    <div class="dial-cursor"></div>
+    <div class="dial-scroll" role="slider" aria-label="Desconto"
+         aria-valuemin="0" aria-valuemax="50" tabindex="0"></div>
   </div>
 
   <!-- ============ SALVOS ============ -->
@@ -968,7 +1032,8 @@
     peso: "45", tempoH: "3", tempoM: "30", qtd: "1",
     precoKg: "92.5", tarifa: "0.92214", potencia: "130", deprecHora: "1.20",
     valorImpressora: "6000", vidaUtil: "5000", manutHora: "0.20",
-    acabamento: "10", valorHora: "30", falhas: "10", margem: "40", taxaVenda: "0"
+    acabamento: "10", valorHora: "30", falhas: "10", margem: "40",
+    taxaVenda: "0", desconto: "0"
   };
 
   var ids = Object.keys(DEFAULTS);
@@ -983,6 +1048,7 @@
   var SESSAO_KEY = "calc3d.sessao.v1";
 
   var ultimo = {};
+  var dialMargem = null, dialDesconto = null;
   var salvos = [];
   var activeId = null;
   var editando = false;
@@ -1085,9 +1151,17 @@
     var taxa   = Math.min(Math.max(num("taxaVenda", 0), 0), 90) / 100;
 
     var precoSemTaxa = custoReal / (1 - margem);
-    var precoFinal   = precoSemTaxa / (1 - taxa);
-    var valorTaxa    = precoFinal - precoSemTaxa;
+    var precoCheio   = precoSemTaxa / (1 - taxa);
+    var valorTaxa    = precoCheio - precoSemTaxa;
     var lucro        = precoSemTaxa - custoReal;
+
+    /* Desconto sai do preço anunciado; a taxa continua incidindo sobre o
+       que o cliente paga, então quem absorve o desconto é o seu lucro. */
+    var desc       = Math.min(Math.max(num("desconto", 0), 0), 90) / 100;
+    var precoFinal = precoCheio * (1 - desc);
+    var recebe     = precoFinal * (1 - taxa);
+    var lucroFinal = recebe - custoReal;
+    var margemFinal = precoFinal > 0 ? (lucroFinal / precoFinal) * 100 : 0;
 
     /* --- cabeçalho --- */
     document.getElementById("heroValue").textContent = brl(precoFinal);
@@ -1099,7 +1173,9 @@
     montaRelatorio({
       material: material / qtd, energia: energia / qtd, deprec: deprec / qtd, manut: manut / qtd,
       fab: fab, acab: acab, reserva: reserva, custoReal: custoReal,
-      lucro: lucro, valorTaxa: valorTaxa, precoSemTaxa: precoSemTaxa, precoFinal: precoFinal,
+      lucro: lucro, valorTaxa: valorTaxa, precoSemTaxa: precoSemTaxa,
+      precoCheio: precoCheio, precoFinal: precoFinal, recebe: recebe,
+      lucroFinal: lucroFinal, margemFinal: margemFinal, desc: desc,
       qtd: qtd, horas: horas, falhas: falhas, margem: margem, taxa: taxa
     });
 
@@ -1162,19 +1238,34 @@
         : "") +
       '</div>';
 
-    var nota = "<b>Lucro " + brl(d.lucro) + "</b>";
-    if (d.taxa > 0) nota += " · você recebe " + brl(d.precoSemTaxa);
-    if (d.fab > 0) nota += " · " + nf(d.precoFinal / d.fab, 1) + "× o custo de fabricar";
+    if (d.desc > 0) {
+      html += '<div class="rel-bloco">' +
+        '<div class="rel-tit">Desconto</div>' +
+        linha(null, "Preço sem desconto", null, null, brl(d.precoCheio)) +
+        linha(null, "Desconto pro cliente", nf(d.desc * 100, 0) + "% do preço", null,
+              "− " + brl(d.precoCheio - d.precoFinal)) +
+        '</div>';
+    }
+
+    var nota = "<b>Lucro " + brl(d.lucroFinal) + "</b>";
+    if (d.taxa > 0) nota += " · você recebe " + brl(d.recebe);
+    nota += " · margem de " + nf(d.margemFinal, 0) + "%";
+    if (d.fab > 0) nota += " · " + nf(d.precoFinal / d.fab, 1) + "× o custo";
 
     html += '<div class="rel-final">' +
-      '<span class="cap">Preço final' + (d.qtd > 1 ? " — cada peça" : "") + '</span>' +
+      '<span class="cap">' + (d.desc > 0 ? "Preço com desconto" : "Preço final") +
+        (d.qtd > 1 ? " — cada peça" : "") + '</span>' +
       '<span class="big">' + brl(d.precoFinal) + '</span>' +
       '<span class="nota">' + nota + '</span>' +
       '</div>';
 
-    if (d.lucro <= 0) {
-      html += '<div class="rel-alerta">⚠️ Com esses números você não ganha nada. ' +
-              'Aumente a margem ou reduza o custo.</div>';
+    if (d.lucroFinal <= 0) {
+      html += '<div class="rel-alerta">⚠️ Com esses números você não ganha nada' +
+              (d.desc > 0 ? " — o desconto comeu todo o lucro." : ". Aumente a margem ou reduza o custo.") +
+              '</div>';
+    } else if (d.desc > 0 && d.lucroFinal < d.lucro * 0.5) {
+      html += '<div class="rel-alerta">⚠️ Esse desconto derruba seu lucro de ' +
+              brl(d.lucro) + ' para ' + brl(d.lucroFinal) + '.</div>';
     }
 
     document.getElementById("relatorio").innerHTML = html;
@@ -1189,10 +1280,8 @@
       "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
       "/h máquina · " + nf(num("potencia", 0), 0) + " W · toque para ajustar";
 
-    var m = num("margem", 0);
-    [].forEach.call(document.querySelectorAll("#presetsMargem button"), function (b) {
-      b.setAttribute("aria-pressed", parseFloat(b.getAttribute("data-m")) === m);
-    });
+    if (dialMargem) dialMargem.set(num("margem", 0));
+    if (dialDesconto) dialDesconto.set(num("desconto", 0));
   }
 
   ids.forEach(function (id) {
@@ -1381,10 +1470,89 @@
     editandoMult = false;
   });
 
-  document.getElementById("presetsMargem").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-m]");
-    if (!b) return;
-    el.margem.value = b.getAttribute("data-m");
+  /* ---- Engrenagem horizontal ----
+     Mesma ideia da roleta do tempo, deitada: cada marca tem 34px e o
+     cursor fica no meio, então centralizar o valor v é scrollLeft =
+     (v - min) * 34. Os espaçadores das pontas deixam o primeiro e o
+     último chegarem ao centro. */
+
+  var MARCA = 34;
+
+  function criaDial(idBox, min, max, aoMudar) {
+    var scroll = document.querySelector("#" + idBox + " .dial-scroll");
+    var html = '<span class="esp" style="width:calc(50% - 17px)"></span>';
+
+    for (var v = min; v <= max; v++) {
+      var maior = v % 10 === 0;
+      html += '<i data-v="' + v + '" class="' + (maior ? "maior" : "") + '">' +
+              '<span class="t"></span>' +
+              '<span class="n">' + (v % 5 === 0 ? v : "") + '</span></i>';
+    }
+
+    html += '<span class="esp" style="width:calc(50% - 17px)"></span>';
+    scroll.innerHTML = html;
+
+    var itens = scroll.querySelectorAll("i[data-v]");
+    var proprio = false;   /* rolagem disparada por nós, não pelo dedo */
+
+    function indice() {
+      return Math.max(0, Math.min(max - min, Math.round(scroll.scrollLeft / MARCA)));
+    }
+
+    function marca() {
+      var i = indice();
+      for (var k = 0; k < itens.length; k++) {
+        var s = k === i;
+        if (itens[k].classList.contains("sel") !== s) itens[k].classList.toggle("sel", s);
+      }
+      scroll.setAttribute("aria-valuenow", String(min + i));
+      return min + i;
+    }
+
+    var t;
+    scroll.addEventListener("scroll", function () {
+      clearTimeout(t);
+      t = setTimeout(function () {
+        var v = marca();
+        if (!proprio) aoMudar(v);
+      }, 60);
+    }, { passive: true });
+
+    scroll.addEventListener("click", function (ev) {
+      var it = ev.target.closest("i[data-v]");
+      if (!it) return;
+      scroll.scrollLeft = (parseInt(it.getAttribute("data-v"), 10) - min) * MARCA;
+      aoMudar(marca());
+    });
+
+    scroll.addEventListener("keydown", function (ev) {
+      var d = ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0;
+      if (!d) return;
+      ev.preventDefault();
+      scroll.scrollLeft = Math.max(0, indice() + d) * MARCA;
+      aoMudar(marca());
+    });
+
+    return {
+      /* posiciona sem chamar aoMudar, para não voltar em laço */
+      set: function (v) {
+        var alvo = Math.max(0, Math.min(max - min, Math.round(v) - min)) * MARCA;
+        if (Math.abs(scroll.scrollLeft - alvo) < 1) { marca(); return; }
+        proprio = true;
+        scroll.scrollLeft = alvo;
+        marca();
+        setTimeout(function () { proprio = false; }, 120);
+      }
+    };
+  }
+
+  dialMargem = criaDial("dialMargem", 0, 90, function (v) {
+    el.margem.value = String(v);
+    calc();
+  });
+
+  dialDesconto = criaDial("dialDesconto", 0, 50, function (v) {
+    el.desconto.value = String(v);
     calc();
   });
 
@@ -1418,6 +1586,17 @@
         "continua recebendo os R$ 26,55.</p>" +
         "<p class='fraco'>Sem esse ajuste, a comissão comeria o que sobra pra " +
         "você, que é o erro mais comum de quem começa a vender em marketplace.</p>"
+    },
+    desconto: {
+      titulo: "Desconto pro cliente",
+      html:
+        "<p>Use quando for fechar uma venda: veja quanto ainda sobra pra " +
+        "você antes de prometer o desconto.</p>" +
+        "<p>O desconto sai <b>inteiro do seu lucro</b>. O custo de fabricar " +
+        "não cai, e a plataforma continua cobrando a taxa dela sobre o valor " +
+        "que o cliente pagar.</p>" +
+        "<p class='fraco'>Se o desconto derrubar seu lucro pela metade ou " +
+        "zerar de vez, o relatório avisa em vermelho.</p>"
     },
     trabalho: {
       titulo: "Seu trabalho",
