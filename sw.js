@@ -1,9 +1,11 @@
-const CACHE_NAME = "calc3d-enxuto-5";
+const CACHE_NAME = "calc3d-enxuto-6";
 const ASSETS = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
   "/config.js",
+  "/fontes/geist-latin.woff2",
+  "/fontes/geist-latin-ext.woff2",
   "/icons/icon-192.png",
   "/icons/icon-512.png"
 ];
