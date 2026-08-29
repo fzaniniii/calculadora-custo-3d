@@ -112,10 +112,14 @@
   }
 
   .nav-btn {
-    appearance: none; border: none; background: transparent;
-    font: inherit; font-size: 16px; color: var(--accent);
-    padding: 11px 0 11px 15px; margin: -11px 0; min-height: 44px;
+    appearance: none; border: 1px solid var(--sep); background: transparent;
+    font: inherit; font-size: 14.5px; font-weight: 600; color: var(--label);
+    padding: 9px 15px; min-height: 38px; border-radius: 999px;
     cursor: pointer; flex: none;
+  }
+
+  .nav-btn:last-child {
+    background: var(--accent); border-color: var(--accent); color: #fff;
   }
 
   .nav-btn:active { opacity: 0.45; }
@@ -154,10 +158,10 @@
   .inner { max-width: 560px; margin: 0 auto; }
 
   .sec-head {
-    display: flex; align-items: baseline; justify-content: space-between;
-    gap: 10px; padding: 0 16px 7px;
-    font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;
-    color: var(--label-2); font-weight: 600;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 10px; padding: 0 4px 10px;
+    font-size: 17px; letter-spacing: -0.015em;
+    color: var(--label); font-weight: 700;
   }
 
   .sec-btn {
@@ -171,7 +175,7 @@
   .sec-btn:active { opacity: 0.45; }
 
   .group {
-    background: var(--card); border-radius: 12px;
+    background: var(--card); border-radius: 16px;
     overflow: hidden; margin-bottom: 22px;
   }
 
@@ -236,8 +240,8 @@
   }
 
   .box {
-    background: var(--card); border-radius: 12px;
-    padding: 12px 4px 10px; text-align: center;
+    background: var(--card); border-radius: 16px;
+    padding: 12px 13px 13px; text-align: left;
     border: 1.5px solid transparent; cursor: text;
     transition: border-color 0.15s ease;
     /* sem isto o quadro do tempo empurra os vizinhos e corta os números */
@@ -247,14 +251,14 @@
   .box:focus-within { border-color: var(--accent); }
 
   .box-label {
-    display: block; font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.04em; color: var(--label-2);
+    display: block; font-size: 11.5px; font-weight: 500;
+    letter-spacing: 0; color: var(--label-2);
   }
 
   /* Laranja = você pode mexer. Vale para todo campo editável do app,
      inclusive o tempo, que é botão. */
   .box input[type="number"] {
-    display: block; width: 100%; min-width: 0; text-align: center;
+    display: block; width: 100%; min-width: 0; text-align: left;
     font-size: 27px; font-weight: 600; letter-spacing: -0.025em;
     color: var(--accent); padding: 3px 0 1px;
   }
@@ -271,7 +275,7 @@
   button.box-tempo:active { background: var(--fill); }
 
   .box-valor {
-    display: block; font-size: 27px; font-weight: 600;
+    display: block; font-size: 27px; font-weight: 700; text-align: left;
     letter-spacing: -0.025em; font-variant-numeric: tabular-nums;
     color: var(--accent); padding: 3px 0 1px;
   }
@@ -357,7 +361,7 @@
 
   .dial {
     position: relative; background: var(--card);
-    border-radius: 12px; padding: 11px 0 9px;
+    border-radius: 16px; padding: 11px 0 9px;
     margin-bottom: 22px; overflow: hidden;
   }
 
@@ -430,7 +434,7 @@
 
   /* ---------- Relatório ---------- */
 
-  .rel { background: var(--card); border-radius: 12px; overflow: hidden; margin-bottom: 10px; }
+  .rel { background: var(--card); border-radius: 16px; overflow: hidden; margin-bottom: 10px; }
 
   .rel-bloco { padding: 13px 16px 12px; position: relative; }
   .rel-bloco + .rel-bloco::before {
@@ -587,7 +591,7 @@
   .cenarios button {
     appearance: none; border: 1px solid var(--sep); background: var(--card);
     color: var(--label); font: inherit; font-size: 15px; font-weight: 600;
-    border-radius: 12px; padding: 12px 12px 11px; text-align: left;
+    border-radius: 14px; padding: 12px 12px 11px; text-align: left;
     cursor: pointer; min-height: 58px; min-width: 0;
   }
 
@@ -733,7 +737,7 @@
 
   .sheet {
     position: relative; width: 100%; max-width: 560px;
-    background: var(--bg); border-radius: 14px 14px 0 0;
+    background: var(--bg); border-radius: 20px 20px 0 0;
     padding: 8px calc(var(--safe-r) + 16px) calc(var(--safe-b) + 18px) calc(var(--safe-l) + 16px);
     animation: rise 0.3s cubic-bezier(0.32,0.72,0,1);
     max-height: 92%; overflow-y: auto;
@@ -764,7 +768,7 @@
   .sheet-actions { display: flex; gap: 10px; }
 
   .btn {
-    flex: 1; appearance: none; border: none; border-radius: 12px;
+    flex: 1; appearance: none; border: none; border-radius: 14px;
     font: inherit; font-size: 17px; font-weight: 600; padding: 14px 12px; cursor: pointer;
   }
 
