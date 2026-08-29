@@ -584,24 +584,30 @@
   .painel-nota b { color: #34c759; font-weight: 700; }
   .painel-nota s { color: rgba(235,245,240,0.5); }
 
-  /* ---------- Cenários ---------- */
 
-  .cenarios { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 22px; }
+  /* ---------- Link do modelo ---------- */
 
-  .cenarios button {
-    appearance: none; border: 1px solid var(--sep); background: var(--card);
-    color: var(--label); font: inherit; font-size: 15px; font-weight: 600;
-    border-radius: 14px; padding: 12px 12px 11px; text-align: left;
-    cursor: pointer; min-height: 58px; min-width: 0;
+  .linkbox { padding: 13px 16px 14px; }
+
+  .linkbox input[type="url"] {
+    display: block; width: 100%; appearance: none;
+    border: none; background: transparent;
+    font: inherit; font-size: 16px; color: var(--accent);
+    padding: 0; -webkit-user-select: text; user-select: text;
   }
 
-  .cenarios button small {
-    display: block; font-size: 11.5px; font-weight: 400;
-    color: var(--label-2); margin-top: 2px;
+  .linkbox input::placeholder { color: var(--label-3); }
+  .linkbox input:focus { outline: none; }
+
+  .link-achado {
+    margin: 9px 0 0; padding-top: 10px;
+    border-top: 1px solid var(--sep);
+    font-size: 15px; font-weight: 600; color: var(--label);
   }
 
-  .cenarios button:active { background: var(--fill); }
-  .cenarios button[aria-pressed="true"] { border-color: var(--accent); }
+  .link-achado[hidden] { display: none; }
+  .link-achado small { display: block; font-size: 12px; font-weight: 400; color: var(--label-2); margin-top: 2px; }
+  .link-achado.vazio { color: var(--label-2); font-weight: 400; font-size: 13.5px; }
 
   /* ---------- Barras no detalhamento ---------- */
 
@@ -809,7 +815,6 @@
   @media (max-width: 360px) {
     .painel-valor { font-size: 38px; }
     .cartao .v { font-size: 17px; }
-    .cenarios button { font-size: 14px; }
     .hero-value { font-size: 38px; }
     .nav-title { font-size: 17px; }
     .boxes { gap: 7px; }
@@ -853,19 +858,23 @@
     <div class="cartoes">
       <div class="cartao"><span class="k">Custo por peça</span><span class="v" id="cCusto">—</span></div>
       <div class="cartao"><span class="k">Lucro por peça</span><span class="v" id="cLucro">—</span></div>
-      <div class="cartao"><span class="k">Tempo do job</span><span class="v" id="cTempo">—</span></div>
+      <div class="cartao"><span class="k">Tempo da placa</span><span class="v" id="cTempo">—</span></div>
       <div class="cartao"><span class="k">Só o filamento</span><span class="v" id="cFilamento">—</span></div>
     </div>
 
     <p class="painel-nota" id="painelNota"></p>
   </div>
 
-  <div class="sec-head"><span>Comece por um cenário</span></div>
-  <div class="cenarios" id="cenarios">
-    <button type="button" data-c="chaveiro">Chaveiro<small>leve · rápido</small></button>
-    <button type="button" data-c="tecnica">Peça técnica<small>média · funcional</small></button>
-    <button type="button" data-c="miniatura">Miniatura<small>detalhe · lenta</small></button>
-    <button type="button" data-c="lote">Lote de 10<small>escala · acabamento</small></button>
+  <div class="sec-head">
+    <span>Link do modelo</span>
+    <button type="button" class="sec-help" data-ajuda="link" aria-label="De onde vem o nome">?</button>
+  </div>
+  <div class="group">
+    <div class="linkbox">
+      <input type="url" id="linkModelo" placeholder="Cole o link do MakerWorld"
+             autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done">
+      <p class="link-achado" id="linkNome" hidden></p>
+    </div>
   </div>
 
   <div class="sec-head"><span>O que você vai imprimir</span></div>
@@ -885,10 +894,10 @@
     <label class="box">
       <span class="box-label">Peças</span>
       <input type="number" id="qtd" value="1" min="1" step="1" inputmode="numeric">
-      <span class="box-unit">no job</span>
+      <span class="box-unit">na placa</span>
     </label>
   </div>
-  <p class="boxes-hint">Valores do <b>job inteiro</b>, como o fatiador mostra. O peso já inclui purga e suporte.</p>
+  <p class="boxes-hint">Valores da <b>placa inteira</b>, como o fatiador mostra. O peso já inclui purga e suporte.</p>
 
   <!-- ============ RELATÓRIO ============ -->
   <div class="sec-head">
@@ -1292,13 +1301,13 @@
     var horas = tempoHoras();
     var qtd = Math.max(Math.floor(num("qtd", 1)), 1);
 
-    /* --- custo de fabricar, do job inteiro --- */
+    /* --- custo de fabricar, da placa inteira --- */
     var material = (num("peso", 0) / 1000) * num("precoKg", 0);
     var energia  = (num("potencia", 0) / 1000) * horas * num("tarifa", 0);
     var deprec   = num("deprecHora", 0) * horas;
     var manut    = num("manutHora", 0) * horas;
-    var fabJob   = material + energia + deprec + manut;
-    var fab      = fabJob / qtd;
+    var fabPlaca = material + energia + deprec + manut;
+    var fab      = fabPlaca / qtd;
 
     /* --- por peça --- */
     var acab   = (num("acabamento", 0) / 60) * num("valorHora", 0);
@@ -1327,7 +1336,7 @@
     document.getElementById("heroSub").innerHTML =
       qtd > 1
         ? "<b>" + qtd + " peças</b> = " + brl(precoFinal * qtd) + " · " + tempoTexto(horas) + " de impressão"
-        : "Job de 1 peça · " + tempoTexto(horas) + " de impressão";
+        : "Placa com 1 peça · " + tempoTexto(horas) + " de impressão";
 
     montaRelatorio({
       material: material / qtd, energia: energia / qtd, deprec: deprec / qtd, manut: manut / qtd,
@@ -1367,7 +1376,7 @@
     document.getElementById("painelNota").hidden = !notas.length;
 
     ultimo = {
-      total: fabJob, porPeca: fab, custoReal: custoReal, qtd: qtd, tempo: horas,
+      total: fabPlaca, porPeca: fab, custoReal: custoReal, qtd: qtd, tempo: horas,
       preco: precoFinal, lucro: lucro, margem: margem * 100
     };
 
@@ -1470,7 +1479,6 @@
       "R$ " + nf(num("precoKg", 0), 2) + "/kg · R$ " + nf(num("deprecHora", 0), 2) +
       "/h máquina · " + nf(num("potencia", 0), 0) + " W · toque para ajustar";
 
-    marcaCenario();
     if (dialMargem) dialMargem.set(num("margem", 0));
     if (dialDesconto) dialDesconto.set(num("desconto", 0));
 
@@ -1529,7 +1537,7 @@
   function totalRoleta() {
     var h = indiceDe(wheelH), m = indiceDe(wheelM);
     document.getElementById("wheelTotal").textContent =
-      h === 0 && m === 0 ? "Escolha o tempo do job" : "Total: " + tempoTexto(h + m / 60);
+      h === 0 && m === 0 ? "Escolha o tempo da placa" : "Total: " + tempoTexto(h + m / 60);
   }
 
   [wheelH, wheelM].forEach(function (w) {
@@ -1861,6 +1869,17 @@
         "<p class='fraco'>Sem esse ajuste, a comissão comeria o que sobra pra " +
         "você, que é o erro mais comum de quem começa a vender em marketplace.</p>"
     },
+    link: {
+      titulo: "Link do modelo",
+      html:
+        "<p>Cole o endereço da peça no MakerWorld, Printables ou onde ela " +
+        "estiver. O nome sai <b>do próprio endereço</b> — em " +
+        "<i>models/1234-suporte-de-fone</i> o nome é \"suporte de fone\".</p>" +
+        "<p>Por isso é instantâneo e funciona sem internet.</p>" +
+        "<p class='fraco'>Quando o endereço não traz o nome, tento abrir a " +
+        "página. Nem sempre dá: MakerWorld e Printables recusam leitura " +
+        "automática. Aí é só digitar o nome na hora de salvar.</p>"
+    },
     desconto: {
       titulo: "Desconto pro cliente",
       html:
@@ -1885,7 +1904,7 @@
     custo: {
       titulo: "Quanto custa produzir",
       html:
-        "<p><b>Filamento:</b> o preço do quilo que você paga. O peso do job já " +
+        "<p><b>Filamento:</b> o preço do quilo que você paga. O peso da placa já " +
         "inclui purga e suporte, então o desperdício está contado.</p>" +
         "<p><b>Tarifa e potência:</b> o que a impressora consome de luz. " +
         "A tarifa está na sua conta; a potência é a média imprimindo.</p>" +
@@ -2048,6 +2067,11 @@
       if (!it) return;
       var v = migraTempo(JSON.parse(JSON.stringify(it.valores)));
       ids.forEach(function (id) { if (v[id] !== undefined) el[id].value = v[id]; });
+      linkAtual = it.link || "";
+      nomeAtual = it.nome || "";
+      campoLink.value = linkAtual;
+      mostraAchado(linkAtual ? nomeAtual : "");
+      gravaLink();
       setAtivo(it.id);
       calc();
       document.querySelector("main").scrollTo({ top: 0, behavior: "smooth" });
@@ -2060,38 +2084,113 @@
     renderSalvos();
   });
 
-  /* ---- Cenários ----
-     Pontos de partida para quem não sabe quanto pesa uma peça. Mexem só
-     no que descreve a impressão; preço do filamento, máquina e margem
-     continuam como você configurou. */
+  /* ---- Link do modelo ----
+     O nome sai do próprio endereço: makerworld.com/models/123-suporte-de-fone
+     carrega "suporte-de-fone". É instantâneo e funciona offline.
 
-  var CENARIOS = {
-    chaveiro:  { peso: "8",   tempoH: "0", tempoM: "25", qtd: "1",  acabamento: "3" },
-    tecnica:   { peso: "45",  tempoH: "3", tempoM: "30", qtd: "1",  acabamento: "10" },
-    miniatura: { peso: "25",  tempoH: "5", tempoM: "0",  qtd: "1",  acabamento: "15" },
-    lote:      { peso: "120", tempoH: "8", tempoM: "0",  qtd: "10", acabamento: "5" }
-  };
+     Ler a página do site seria o ideal, mas MakerWorld e Printables
+     respondem 403 a qualquer acesso automático. Para os poucos casos sem
+     nome no endereço (Thingiverse, por exemplo) existe a função "titulo"
+     no Supabase, usada só como segunda tentativa. */
 
-  function marcaCenario() {
-    [].forEach.call(document.querySelectorAll("#cenarios button"), function (b) {
-      var c = CENARIOS[b.getAttribute("data-c")];
-      var igual = Object.keys(c).every(function (k) { return String(el[k].value) === c[k]; });
-      b.setAttribute("aria-pressed", igual ? "true" : "false");
-    });
+  var LINK_KEY = "calc3d.link.v1";
+  var linkAtual = "", nomeAtual = "";
+  var campoLink = document.getElementById("linkModelo");
+  var achadoEl = document.getElementById("linkNome");
+
+  function nomeDoLink(bruto) {
+    var s = String(bruto || "").trim();
+    if (!s) return "";
+    if (!/^https?:\/\//i.test(s)) s = "https://" + s;
+    try {
+      var u = new URL(s);
+      var partes = u.pathname.split("/").filter(Boolean);
+      var ultimo = decodeURIComponent(partes[partes.length - 1] || "");
+
+      ultimo = ultimo.replace(/^\d+[-_]/, "");          /* 1234567-nome */
+      if (/^thing:?\d*$/i.test(ultimo) || /^\d+$/.test(ultimo)) return "";
+
+      var nome = ultimo
+        .replace(/\.(stl|3mf|obj|step|stp|zip)$/i, "")
+        .replace(/[-_]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
+      if (nome.length < 3) return "";
+      return nome.charAt(0).toUpperCase() + nome.slice(1);
+    } catch (e) { return "" }
   }
 
-  document.getElementById("cenarios").addEventListener("click", function (ev) {
-    var b = ev.target.closest("[data-c]");
-    if (!b) return;
-    var c = CENARIOS[b.getAttribute("data-c")];
-    Object.keys(c).forEach(function (k) { el[k].value = c[k]; });
-    setAtivo(null);
-    calc();
+  function mostraAchado(nome, aviso) {
+    if (nome) {
+      achadoEl.className = "link-achado";
+      achadoEl.innerHTML = esc(nome) + "<small>vai como nome ao salvar</small>";
+      achadoEl.hidden = false;
+    } else if (aviso) {
+      achadoEl.className = "link-achado vazio";
+      achadoEl.textContent = aviso;
+      achadoEl.hidden = false;
+    } else {
+      achadoEl.hidden = true;
+    }
+  }
+
+  /* Segunda tentativa, só quando o endereço não traz o nome */
+  function buscaNoServidor(url) {
+    if (!configurado()) return;
+    fetch(SUPA_URL + "/functions/v1/titulo?url=" + encodeURIComponent(url), {
+      headers: { apikey: SUPA_KEY }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d && d.nome && campoLink.value.trim()) {
+          nomeAtual = d.nome;
+          mostraAchado(d.nome);
+          gravaLink();
+        }
+      })
+      .catch(function () { /* sem internet, tudo bem */ });
+  }
+
+  function gravaLink() {
+    try {
+      localStorage.setItem(LINK_KEY, JSON.stringify({ link: linkAtual, nome: nomeAtual }));
+    } catch (e) { /* ignora */ }
+  }
+
+  function leLink() {
+    try {
+      var d = JSON.parse(localStorage.getItem(LINK_KEY) || "null");
+      if (!d) return;
+      linkAtual = d.link || "";
+      nomeAtual = d.nome || "";
+      campoLink.value = linkAtual;
+      mostraAchado(nomeAtual);
+    } catch (e) { /* ignora */ }
+  }
+
+  var relogioLink;
+  campoLink.addEventListener("input", function () {
+    var bruto = campoLink.value.trim();
+    linkAtual = bruto ? linkSeguro(bruto) : "";
+    nomeAtual = nomeDoLink(bruto);
+
+    if (!bruto) mostraAchado("");
+    else if (nomeAtual) mostraAchado(nomeAtual);
+    else mostraAchado("", "Esse link não traz o nome. Procurando…");
+
+    gravaLink();
+
+    clearTimeout(relogioLink);
+    if (bruto && !nomeAtual && linkAtual) {
+      relogioLink = setTimeout(function () { buscaNoServidor(linkAtual); }, 600);
+    }
   });
 
   /* Novo cálculo: zera só a peça, preserva os ajustes que você configurou. */
   document.getElementById("btnNovo").addEventListener("click", function () {
     ["peso", "tempoH", "tempoM", "qtd"].forEach(function (id) { el[id].value = DEFAULTS[id]; });
+    linkAtual = ""; nomeAtual = ""; campoLink.value = ""; mostraAchado(""); gravaLink();
     setAtivo(null);
     calc();
     document.querySelector("main").scrollTo({ top: 0, behavior: "smooth" });
@@ -2111,7 +2210,7 @@
       "",
       "Preço: " + brl(ultimo.preco) + " por peça",
       ultimo.qtd > 1 ? "Lote de " + ultimo.qtd + " peças: " + brl(ultimo.preco * ultimo.qtd) : null,
-      "Tempo de impressão: " + tempoTexto(ultimo.tempo) + " o job",
+      "Tempo de impressão: " + tempoTexto(ultimo.tempo) + " a placa",
       "Material: PLA",
       it && it.link ? "" : null,
       it && it.link ? it.link : null
@@ -2127,8 +2226,8 @@
 
   function abrirSheet() {
     var it = activeId ? acharSalvo(activeId) : null;
-    fNome.value = it ? it.nome : "";
-    fLink.value = it ? it.link : "";
+    fNome.value = it ? it.nome : nomeAtual;
+    fLink.value = it ? it.link : linkAtual;
     document.getElementById("sheetHint").textContent = it
       ? 'Manter o nome atualiza "' + it.nome + '". Mudar o nome cria um novo.'
       : "Venda " + brl(ultimo.preco) + " · custo " + brl(ultimo.custoReal) + " · " + tempoTexto(ultimo.tempo);
@@ -2462,6 +2561,7 @@
   /* ================= Arranque ================= */
 
   carregarCampos();
+  leLink();
   lerSalvos();
   lerSessao();
   renderSalvos();
