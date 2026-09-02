@@ -227,7 +227,7 @@
   /* -------------------------------------------------------------- desenho -- */
 
   var el = {};
-  ["preco", "precoNota", "cimeira", "trilho", "gramas", "tempo", "naMesa", "pedido",
+  ["preco", "precoNota", "precoPedido", "cimeira", "trilho", "gramas", "tempo", "naMesa", "pedido",
    "dicaGramas", "dicaPedido", "pedTotal", "pedPlacas", "pedHora", "avisoPedido",
    "barra", "extrato", "avisoMargem", "multiplicador", "notaSoma", "subDeprec",
    "subVida", "subCalculo", "subFalhas", "notaVersao", "listaFilamentos"
@@ -369,13 +369,27 @@
   function desenha() {
     var d = conta();
 
-    /* Cimeira */
-    el.preco.innerHTML = '<span class="preco-cifra">R$</span>' +
-                         nf(d.preco, 2);
-    el.precoNota.innerHTML = d.pedido > 1
-      ? "<b>" + d.pedido + " peças</b> por " + brl(d.totalPedido) + " · " +
-        tempoTexto(d.horasTotais)
-      : "uma peça · " + tempoTexto(d.horas) + " de impressão";
+    /* Cimeira. O número grande sozinho não explica nada, então logo abaixo
+       ele se abre na conta que o formou: o que sai do seu bolso, mais o que
+       fica nele. A parte que fica é a que ganha cor. */
+    el.preco.innerHTML = '<span class="preco-cifra">R$</span>' + nf(d.preco, 2);
+
+    /* "Custo" aqui é tudo que não é seu: fabricar, seu tempo, embalagem,
+       frete, a fatia da plataforma e o imposto. Assim as duas parcelas
+       sempre fecham no preço, sem sobra inexplicada. O extrato lá embaixo
+       separa uma coisa da outra. */
+    var sai = d.preco - d.lucro;
+    el.precoNota.innerHTML = d.lucro < 0
+      ? brl(sai) + " de custo <span class='preco-lucro' " +
+        "style='color:var(--rampa-0)'>− " + brl(-d.lucro) + " de prejuízo</span>"
+      : brl(sai) + " de custo <span class='preco-lucro' style='color:" +
+        corMargem(d.margemReal * 100) + "'>+ " + brl(d.lucro) + " de lucro</span>";
+
+    el.precoPedido.hidden = false;
+    el.precoPedido.textContent = d.pedido > 1
+      ? d.pedido + " peças · " + brl(d.totalPedido) + " o pedido · " +
+        tempoTexto(d.horasTotais) + " de máquina"
+      : tempoTexto(d.horas) + " de impressão";
 
     /* Dicas nas células */
     el.dicaGramas.textContent = brl(d.material * d.naMesa) + " de " + d.fil.nome;

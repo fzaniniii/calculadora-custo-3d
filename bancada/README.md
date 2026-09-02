@@ -6,13 +6,38 @@ Site estático, sem build: HTML, CSS e JavaScript puros. Instalável como app no
 iPhone e funcionando offline. Projeto separado da calculadora da raiz do
 repositório, que continua no ar sem ser tocada.
 
+## Como usar
+
+Você diz ao app o que o fatiador mostrou, e ele diz por quanto vender.
+
+**Uma vez só:** abra os Ajustes (ícone de controles no topo) e confira
+potência, tarifa de energia, depreciação e o valor da sua hora.
+
+**A cada peça**, fatie no Bambu Studio e copie o que ele mostrar:
+
+| Campo | O que vai nele |
+|---|---|
+| Filamento | o que você vai usar |
+| Gramas | o número do fatiador |
+| Tempo | o número do fatiador |
+| Peças nesta placa | quantas você posicionou naquela fatia |
+| O cliente quer | o tamanho do pedido |
+| Margem | quanto do preço fica com você |
+
+O campo que mais confunde é **peças nesta placa**. As gramas e o tempo são da
+placa inteira: se você pôs 4 peças e o fatiador disse "180 g, 6 h", esses
+180 g são das 4 juntas. Então ali vai 4, e o app divide por 4.
+
+A resposta é o número grande no topo, com a conta que o formou logo abaixo:
+quanto sai do seu bolso e quanto fica nele.
+
 ## As duas camadas
 
 O app se divide em duas, e essa divisão é a razão de ele existir.
 
 **O painel** é o que muda a cada peça, e cabe numa tela sem rolar: qual
-filamento, quantas gramas, quanto tempo, quantas cabem na mesa, quantas o
-cliente quer, margem e desconto.
+filamento, quantas gramas, quanto tempo, quantas peças estavam na placa,
+quantas o cliente quer, margem e desconto.
 
 **Os ajustes** ficam atrás de um botão e você abre uma vez por mês, se tanto:
 potência, tarifa de energia, depreciação, manutenção, o valor da sua hora, a
@@ -22,8 +47,8 @@ reserva para falhas, embalagem, frete, taxa da plataforma e imposto.
 
 Sem multiplicador mágico. Cada linha soma na de baixo e o extrato mostra todas.
 
-1. **Custo de imprimir** é da placa inteira e se divide pelas peças que cabem
-   na mesa: filamento, energia, depreciação e manutenção
+1. **Custo de imprimir** é da placa inteira e se divide pelas peças que
+   estavam nela: filamento, energia, depreciação e manutenção
 2. **+ Acabamento** — minutos por peça × o valor da sua hora
 3. **+ Reserva para falhas** — % sobre o que veio acima; a impressão que deu
    errado consumiu material e máquina, e quem cobre isso são as que deram certo
@@ -52,11 +77,12 @@ entrada.
 
 O app separa duas coisas que costumam virar uma só:
 
-- **quantas cabem na mesa** divide o custo fixo da placa
+- **peças nesta placa** é quantas você fatiou juntas, e divide o custo fixo
 - **quantas o cliente quer** define quantas placas rodam
 
-Se cabem 4 e ele quer 10, são 3 placas, e a terceira vai com 2 vagas sobrando.
-O app diz isso, porque encaixar mais 2 sai pelo mesmo tempo de máquina.
+Se são 4 por placa e ele quer 10, rodam 3 placas, e a última vai com 2 vagas
+sobrando. O app diz isso, porque encaixar mais 2 sai pelo mesmo tempo de
+máquina.
 
 O **lucro por hora** é a medida que decide se vale pegar o trabalho: uma peça
 que dá R$ 20 em 2 h vale mais que uma que dá R$ 30 em 8 h.

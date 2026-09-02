@@ -4,7 +4,7 @@
  * isso o app já instalado continua servindo a versão velha.
  */
 
-const CACHE = "bancada-2";
+const CACHE = "bancada-3";
 
 const ARQUIVOS = [
   "./",

@@ -31,7 +31,8 @@
   <div class="cimeira-corpo">
     <div>
       <span class="preco" id="preco"><span class="preco-cifra">R$</span>0,00</span>
-      <div class="preco-nota" id="precoNota">uma peça</div>
+      <div class="preco-nota" id="precoNota"></div>
+      <div class="preco-pedido" id="precoPedido" hidden></div>
     </div>
     <div class="cimeira-acoes">
       <button class="btn btn-icone" id="abrirSalvos" aria-label="Cálculos salvos">
@@ -67,6 +68,9 @@
   <!-- =================================================== a placa ======== -->
   <section class="secao" aria-labelledby="tPlaca">
     <div class="secao-titulo"><h2 id="tPlaca">A placa</h2></div>
+    <p class="secao-dica">
+      Gramas e tempo saem do fatiador, e são <b>da placa inteira</b>.
+    </p>
 
     <div class="malha">
       <div class="celula">
@@ -82,17 +86,17 @@
       <div class="celula">
         <label for="tempo">Tempo</label>
         <button type="button" class="celula-botao" id="tempo">3<small>h</small> 30<small>min</small></button>
-        <div class="celula-dica">de impressão</div>
+        <div class="celula-dica">toque para mudar</div>
       </div>
 
       <div class="celula">
-        <label for="naMesa">Cabem na mesa</label>
+        <label for="naMesa">Peças nesta placa</label>
         <div class="celula-valor">
           <input type="number" id="naMesa" value="1" min="1" step="1"
                  inputmode="numeric" enterkeyhint="done" autocomplete="off">
           <span class="celula-un">un</span>
         </div>
-        <div class="celula-dica">por impressão</div>
+        <div class="celula-dica">quantas você fatiou junto</div>
       </div>
 
       <div class="celula">
